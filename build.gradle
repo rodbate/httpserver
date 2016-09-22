@@ -18,5 +18,6 @@ dependencies {
     compile 'ch.qos.logback:logback-classic:1.1.7'
     compile 'ch.qos.logback:logback-core:1.1.7'
     compile 'ch.qos.logback:logback-access:1.1.7'
+    compile 'org.codehaus.groovy:groovy-all:2.4.7'
     testCompile 'junit:junit:4.11'
 }
