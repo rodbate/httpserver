@@ -1,4 +1,4 @@
-import com.rodbate.handler.ServerHandler;
+import com.rodbate.handler.HttpServerInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -11,6 +11,8 @@ import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
+
 /**
  *
  * server 启动类
@@ -22,7 +24,7 @@ public class Bootstrap {
 
     private static final int PORT = 8888;
 
-    public static void main(String[] args) {
+    public static void main() {
 
         //boss 线程
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
@@ -39,11 +41,12 @@ public class Bootstrap {
             bootstrap.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.INFO))
-                    .childHandler(new ServerHandler());
+                    .childHandler(new HttpServerInitializer());
 
 
             Channel channel = bootstrap.bind(PORT).sync().channel();
 
+            printLogo();
 
             LOGGER.info("========>>>>>>>> Open your web browser and navigate to http://127.0.0.1:" + PORT);
 
@@ -56,5 +59,49 @@ public class Bootstrap {
             workerGroup.shutdownGracefully();
         }
 
+    }
+
+
+
+
+
+    private static void printLogo(){
+
+        StringBuilder logo = new StringBuilder();
+
+        InputStream is;
+
+        BufferedReader br = null;
+
+        try {
+
+            is = Bootstrap.class.getResourceAsStream("logo.txt");
+
+            br = new BufferedReader(new InputStreamReader(is));
+
+            String line = "";
+
+            while ((line = br.readLine()) != null){
+                logo.append(line + "\n");
+            }
+
+
+        } catch (FileNotFoundException e) {
+            //ignore
+            e.printStackTrace();
+        } catch (IOException e) {
+            //ignore
+            e.printStackTrace();
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    //ignore
+                }
+            }
+        }
+
+        System.out.println(logo.toString());
     }
 }
