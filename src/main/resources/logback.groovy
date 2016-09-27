@@ -20,8 +20,10 @@ appender("com.rodbate", RollingFileAppender) {
         pattern = "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%file:%line] [%level] %msg%n";
     }
     rollingPolicy(TimeBasedRollingPolicy){
-        fileNamePattern = "logs/jvm-server-log-%d{yyyy-MM-dd}.log";
-        maxHistory = 7;
+        fileNamePattern = "logs/server-log-%d{yyyy-MM-dd}.log";
+        // 6 + 1
+        maxHistory = 6;
+        cleanHistoryOnStart = true;
     }
 }
 
