@@ -1,7 +1,7 @@
-import com.rodbate.handler.HttpServerInitializer;
+package com.rodbate;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -41,7 +41,7 @@ public class Bootstrap {
             bootstrap.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.INFO))
-                    .childHandler(new HttpServerInitializer());
+                    .childHandler(new HttpServerInitializerFactory());
 
 
             Channel channel = bootstrap.bind(PORT).sync().channel();
@@ -73,16 +73,18 @@ public class Bootstrap {
 
         BufferedReader br = null;
 
+        String separator = System.getProperty("line.separator", "\n");
+
         try {
 
             is = Bootstrap.class.getResourceAsStream("logo.txt");
 
             br = new BufferedReader(new InputStreamReader(is));
 
-            String line = "";
+            String line;
 
             while ((line = br.readLine()) != null){
-                logo.append(line + "\n");
+                logo.append(line).append(separator);
             }
 
 

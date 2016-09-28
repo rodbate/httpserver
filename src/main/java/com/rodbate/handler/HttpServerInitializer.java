@@ -1,6 +1,7 @@
 package com.rodbate.handler;
 
 
+import com.rodbate.dispatcher.BaseRequestDispatcher;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -18,6 +19,7 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel>{
 
         pipeline.addLast(new HttpResponseEncoder());
 
-        pipeline.addLast(new HttpServerHandler());
+        //pipeline.addLast(new HttpServerHandler());
+        //pipeline.addLast(new BaseRequestDispatcher());
     }
 }
