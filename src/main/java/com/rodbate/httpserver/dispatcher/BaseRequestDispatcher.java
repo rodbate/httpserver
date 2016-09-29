@@ -63,7 +63,7 @@ public abstract class BaseRequestDispatcher extends AbstractRequestDispatcher{
     /**
      * 子类处理分发逻辑
      *
-     * @throws Exception
+     * @throws Exception ex
      */
     protected abstract void dispatch() throws Exception;
 

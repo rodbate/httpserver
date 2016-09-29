@@ -25,7 +25,7 @@ public class ClassReflection {
      *
      * @param classLoader 类加载器
      * @param pack 包路径  com.rodbate
-     * @return Set<Class<?>>
+     * @return set
      */
     public static Set<Class<?>> getClassesFromPackage(ClassLoader classLoader, String pack) {
 

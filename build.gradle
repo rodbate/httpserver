@@ -4,9 +4,12 @@ version '1.0.0'
 
 apply plugin: 'java'
 apply plugin: 'idea'
+apply plugin: 'maven'
+apply plugin: 'signing'
 
 
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
@@ -24,6 +27,74 @@ dependencies {
 
 
 
+uploadArchives {
+    repositories {
+        mavenDeployer {
 
-compileJava.options.encoding = 'UTF-8'
-compileTestJava.options.encoding = 'UTF-8'
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+
+            pom.project {
+                name 'httpserver'
+                packaging 'jar'
+                description 'http server based on netty4'
+                url 'https://github.com/rodbate/httpserver.git'
+
+                scm {
+                    url 'scm:git@github.com:rodbate/httpserver.git'
+                    connection 'scm:git:git://github.com/rodbate/httpserver.git'
+                    developerConnection 'scm:git:https://github.com/rodbate/httpserver.git'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'rodbate'
+                        name 'rodbate'
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from 'build/docs/javadoc'
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives jar
+    archives javadocJar
+    archives sourcesJar
+}
+
+
+signing {
+    sign configurations.archives
+}
+
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(Javadoc) {
+    options.encoding = 'UTF-8'
+}

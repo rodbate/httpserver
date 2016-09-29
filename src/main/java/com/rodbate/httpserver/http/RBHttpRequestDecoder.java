@@ -24,7 +24,7 @@ public class RBHttpRequestDecoder extends HttpRequestDecoder {
      *
      * @param initialLine    GET  /uri  HTTP/1.1
      * @return RBHttpRequest
-     * @throws Exception
+     * @throws Exception ex
      */
     @Override
     protected HttpMessage createMessage(String[] initialLine) throws Exception {
