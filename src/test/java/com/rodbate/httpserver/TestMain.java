@@ -1,4 +1,4 @@
-package com.rodbate;
+package com.rodbate.httpserver;
 
 
 import org.junit.Test;

@@ -1,4 +1,4 @@
-package com.rodbate.handler;
+package com.rodbate.httpserver.handler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

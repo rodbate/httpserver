@@ -1,4 +1,4 @@
-package com.rodbate.http;
+package com.rodbate.httpserver.http;
 
 
 import io.netty.handler.codec.http.DefaultHttpResponse;

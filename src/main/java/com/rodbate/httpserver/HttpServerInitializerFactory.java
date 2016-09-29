@@ -1,9 +1,9 @@
-package com.rodbate;
+package com.rodbate.httpserver;
 
 
-import com.rodbate.dispatcher.DefaultRequestDispatcher;
-import com.rodbate.http.RBHttpRequestDecoder;
-import com.rodbate.http.RBHttpResponseEncoder;
+import com.rodbate.httpserver.dispatcher.DefaultRequestDispatcher;
+import com.rodbate.httpserver.http.RBHttpRequestDecoder;
+import com.rodbate.httpserver.http.RBHttpResponseEncoder;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;

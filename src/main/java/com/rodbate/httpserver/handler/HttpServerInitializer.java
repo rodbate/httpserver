@@ -1,7 +1,6 @@
-package com.rodbate.handler;
+package com.rodbate.httpserver.handler;
 
 
-import com.rodbate.dispatcher.BaseRequestDispatcher;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;

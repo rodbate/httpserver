@@ -1,4 +1,4 @@
-package com.rodbate;
+package com.rodbate.httpserver;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;

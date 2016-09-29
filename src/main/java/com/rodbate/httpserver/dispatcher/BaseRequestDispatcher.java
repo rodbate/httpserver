@@ -1,6 +1,7 @@
-package com.rodbate.dispatcher;
+package com.rodbate.httpserver.dispatcher;
 
 
+import com.rodbate.httpserver.http.RBHttpRequest;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -36,12 +37,11 @@ public abstract class BaseRequestDispatcher extends AbstractRequestDispatcher{
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
 
-        if (msg instanceof HttpRequest) {
-
-            // TODO: 2016/9/28 0028  处理封装request 并分发到对应的uri上
+        if (msg instanceof RBHttpRequest) {
 
 
-            HttpRequest request = (HttpRequest) msg;
+
+            RBHttpRequest request = (RBHttpRequest) msg;
 
             String uri = request.uri();
 

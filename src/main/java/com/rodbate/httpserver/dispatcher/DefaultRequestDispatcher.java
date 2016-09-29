@@ -1,4 +1,4 @@
-package com.rodbate.dispatcher;
+package com.rodbate.httpserver.dispatcher;
 
 
 /**
@@ -8,8 +8,6 @@ package com.rodbate.dispatcher;
  *
  */
 public class DefaultRequestDispatcher extends BaseRequestDispatcher {
-
-
 
 
 

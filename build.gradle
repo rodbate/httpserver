@@ -1,4 +1,4 @@
-group 'httpserver'
+group 'com.rodbate'
 version '1.0.0'
 
 
@@ -21,3 +21,9 @@ dependencies {
     compile 'org.codehaus.groovy:groovy-all:2.4.7'
     testCompile 'junit:junit:4.11'
 }
+
+
+
+
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'

@@ -1,4 +1,4 @@
-package com.rodbate.dispatcher;
+package com.rodbate.httpserver.dispatcher;
 
 
 import io.netty.channel.SimpleChannelInboundHandler;
