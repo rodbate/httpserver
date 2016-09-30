@@ -13,6 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  *
@@ -23,7 +27,11 @@ public class Bootstrap {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Bootstrap.class);
 
-    private static final int PORT = 8888;
+    private static int PORT;
+
+
+
+    private final static Map<String, Object> properties = new HashMap<>();
 
     public static void main() {
 
@@ -33,6 +41,9 @@ public class Bootstrap {
         //工作线程
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
+        initProperties();
+
+        PORT = Integer.valueOf(getProperty("port"));
 
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -65,7 +76,35 @@ public class Bootstrap {
     }
 
 
+    public static void initProperties(){
 
+        InputStream is = ClassLoader.getSystemResourceAsStream("server.properties");
+
+        Properties props = new Properties();
+
+        try {
+            props.load(is);
+
+            Enumeration<?> names = props.propertyNames();
+
+            while (names.hasMoreElements()) {
+
+                String name = String.valueOf(names.nextElement());
+
+                Object value = props.get(name);
+
+                properties.put(name, value);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static String getProperty(String name){
+        return String.valueOf(properties.get(name));
+    }
 
 
     private static void printLogo(){
