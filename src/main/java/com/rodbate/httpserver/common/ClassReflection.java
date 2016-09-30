@@ -3,6 +3,9 @@ package com.rodbate.httpserver.common;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Enumeration;
@@ -116,8 +119,56 @@ public class ClassReflection {
     }
 
 
+    public static Set<Class<?>> getClassesByAnnotation(Class<? extends Annotation> annotation){
+
+        Set<Class<?>> classes = new HashSet<>();
+
+        Set<Class<?>> classSet = getClassesFromPackage(null, "");
+
+        for (Class<?> clazz : classSet) {
+            if (clazz.isAnnotationPresent(annotation)) {
+                classes.add(clazz);
+            }
+        }
+
+        return classes;
+    }
 
 
+    public static Set<Method> getMethodsByClassAndAnnotation(Class<?> clazz, Class<? extends Annotation> annotation){
+
+        Set<Method> methods = new HashSet<>();
+
+        Method[] declaredMethods = clazz.getDeclaredMethods();
+
+        for (Method m : declaredMethods) {
+            if (m.isAnnotationPresent(annotation)) {
+
+                methods.add(m);
+            }
+        }
+
+        return methods;
+    }
+
+    public static Set<Method> getMethodsByAnnotation(Class<? extends Annotation> annotation){
+        Set<Method> methods = new HashSet<>();
+
+        Set<Class<?>> classSet = getClassesFromPackage(null, "");
+
+        for (Class<?> clazz : classSet) {
+            Method[] declaredMethods = clazz.getDeclaredMethods();
+
+            for (Method m : declaredMethods) {
+                if (m.isAnnotationPresent(annotation)) {
+
+                    methods.add(m);
+                }
+            }
+        }
+
+        return methods;
+    }
 
     public static void main(String[] args) throws IOException {
 

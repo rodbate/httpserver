@@ -1,5 +1,6 @@
 package com.rodbate.httpserver;
 
+import com.rodbate.httpserver.common.RequestMappers;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
@@ -48,6 +49,8 @@ public class Bootstrap {
 
             printLogo();
 
+            RequestMappers.init();
+
             LOGGER.info("========>>>>>>>> Open your web browser and navigate to http://127.0.0.1:" + PORT);
 
             channel.closeFuture().sync();
@@ -77,7 +80,7 @@ public class Bootstrap {
 
         try {
 
-            is = Bootstrap.class.getResourceAsStream("logo.txt");
+            is = ClassLoader.getSystemResourceAsStream("logo.txt");
 
             br = new BufferedReader(new InputStreamReader(is));
 

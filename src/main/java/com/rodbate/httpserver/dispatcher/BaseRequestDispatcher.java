@@ -37,35 +37,22 @@ public abstract class BaseRequestDispatcher extends AbstractRequestDispatcher{
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
 
-        if (msg instanceof RBHttpRequest) {
-
-
-
-            RBHttpRequest request = (RBHttpRequest) msg;
-
-            String uri = request.uri();
-
-            ByteBuf content = Unpooled.copiedBuffer((uri + "response").getBytes());
-
-            FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                    HttpResponseStatus.OK, content);
-
-            response.headers().add("Content-Type", "application/json");
-            response.headers().add("Content-Length", content.readableBytes());
-
-            ctx.writeAndFlush(response);
-
-        }
-
+        dispatch(ctx, msg);
 
     }
 
+
     /**
-     * 子类处理分发逻辑
+     * 子类分发处理逻辑
      *
+     * @param ctx ChannelHandlerContext
+     * @param msg  HttpObject
      * @throws Exception ex
      */
-    protected abstract void dispatch() throws Exception;
+    protected abstract void dispatch(ChannelHandlerContext ctx, HttpObject msg) throws Exception;
+
+
+
 
 
     @Override

@@ -22,9 +22,9 @@ public class HttpServerInitializerFactory extends ChannelInitializer<SocketChann
 
         ChannelPipeline pipeline = ch.pipeline();
 
-        pipeline.addLast(new RBHttpRequestDecoder())
-                .addLast(new RBHttpResponseEncoder())
-                .addLast(new DefaultRequestDispatcher());
+        pipeline.addLast("decoder", new RBHttpRequestDecoder())
+                .addLast("encoder", new RBHttpResponseEncoder())
+                .addLast("dispatcher", new DefaultRequestDispatcher());
 
 
     }

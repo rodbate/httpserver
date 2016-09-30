@@ -1,5 +1,5 @@
 group 'com.github.rodbate'
-version '1.0.0'
+version '1.0.1'
 
 
 apply plugin: 'java'
@@ -22,6 +22,7 @@ dependencies {
     compile 'ch.qos.logback:logback-core:1.1.7'
     compile 'ch.qos.logback:logback-access:1.1.7'
     compile 'org.codehaus.groovy:groovy-all:2.4.7'
+    compile 'com.alibaba:fastjson:1.2.16'
     testCompile 'junit:junit:4.11'
 }
 
