@@ -1,17 +1,18 @@
 package com.rodbate.httpserver.http;
 
 
+import com.rodbate.httpserver.common.StringUtil;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.cookie.Cookie;
+import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import io.netty.handler.codec.http.multipart.*;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -107,6 +108,7 @@ public class RBHttpRequest extends DefaultHttpRequest {
 
         }
 
+
         return httpPostRequestDecoder;
 
 
@@ -116,6 +118,26 @@ public class RBHttpRequest extends DefaultHttpRequest {
 
     public String getHeaderByName(String name){
         return headers().get(name);
+    }
+
+
+    /**
+     * 获取cookie
+     *
+     * @return Set<Cookie>
+     */
+    public Set<Cookie> getCookie(){
+        Set<Cookie> cookies;
+
+        String value = headers().get("Cookie");
+
+        if (StringUtil.isNull(value)) {
+            cookies = Collections.emptySet();
+        } else {
+            cookies = ServerCookieDecoder.STRICT.decode(value);
+        }
+
+        return cookies;
     }
 
 }

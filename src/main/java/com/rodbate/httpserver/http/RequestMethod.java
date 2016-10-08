@@ -5,7 +5,7 @@ package com.rodbate.httpserver.http;
 
 public enum RequestMethod {
 
-    GET("GET"), POST("POST"), PUT("PUT"), DELETE("DELETE"), HEAD("HEAD");
+    GET("GET"), POST("POST"), PUT("PUT"), DELETE("DELETE"), HEAD("HEAD"), ALL("ALL");
 
     private final String desc;
 

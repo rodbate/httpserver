@@ -17,7 +17,7 @@ public @interface RequestMapping {
     String value();
 
 
-    RequestMethod[] method() default {};
+    RequestMethod[] method() default {RequestMethod.ALL};
 
 
     String responseContentType() default "application/json; charset=UTF-8";

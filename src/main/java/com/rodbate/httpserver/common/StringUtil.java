@@ -39,6 +39,17 @@ public class StringUtil {
     }
 
 
+
+    public static boolean isNotNull(String str) {
+
+        return str != null && str.trim().length() > 0;
+    }
+
+    public static boolean isNull(String s) {
+        return !isNotNull(s);
+    }
+
+
     public static void main(String[] args) {
 
         System.out.println(removeBlankSpace("Content-Type = multipart/form-data; boundary=----WebKitFormBoundaryGzGFIXxIloOfAyym"));

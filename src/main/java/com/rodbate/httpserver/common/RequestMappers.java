@@ -30,10 +30,10 @@ public class RequestMappers {
 
 
     public static void init(){
-        LOG.info(" >>>>>>>>>>>  URL Mapper Begin =============>>>>> ");
+        LOG.info("========>>>>>>>> URL Mapper Initialize Begin");
         initMappers();
         printMappers();
-        LOG.info(" >>>>>>>>>>>  URL Mapper Finish =============>>>>> ");
+        LOG.info("========>>>>>>>> URL Mapper Initialize Finish");
     }
 
 

@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.ServerSocket;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +36,8 @@ public class Bootstrap {
 
     public static void main() {
 
+        long start = System.currentTimeMillis();
+
         //boss 线程
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
 
@@ -48,13 +51,16 @@ public class Bootstrap {
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
 
-            bootstrap.option(ChannelOption.SO_BACKLOG, 1024);
+            bootstrap.option(ChannelOption.SO_BACKLOG, 1024)
+                    .option(ChannelOption.SO_REUSEADDR, true)
+                    .option(ChannelOption.TCP_NODELAY, true);
 
             bootstrap.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.INFO))
                     .childHandler(new HttpServerInitializerFactory());
 
+            isBindPort(PORT);
 
             Channel channel = bootstrap.bind(PORT).sync().channel();
 
@@ -62,6 +68,7 @@ public class Bootstrap {
 
             RequestMappers.init();
 
+            LOGGER.info("========>>>>>>>> Http Server Start Up ! Using Time [{}MS]", System.currentTimeMillis() - start);
             LOGGER.info("========>>>>>>>> Open your web browser and navigate to http://127.0.0.1:" + PORT);
 
             channel.closeFuture().sync();
@@ -71,6 +78,30 @@ public class Bootstrap {
         } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
+        }
+
+    }
+
+
+    public static void isBindPort(int port){
+
+        ServerSocket serverSocket = null;
+
+        try {
+            serverSocket = new ServerSocket(port);
+
+        } catch (IOException e) {
+            LOGGER.error("========>>>>>>>> Fail to bind to the port[{}]", port);
+            LOGGER.error("========>>>>>>>> Http server exist");
+            System.exit(1);
+        } finally {
+            if (serverSocket != null) {
+                try {
+                    serverSocket.close();
+                } catch (IOException e) {
+                    //ignore
+                }
+            }
         }
 
     }

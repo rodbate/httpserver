@@ -3,6 +3,9 @@ package com.rodbate.httpserver.http;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.cookie.*;
+import io.netty.handler.codec.http.cookie.Cookie;
+import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 
 public class RBHttpResponse extends DefaultFullHttpResponse {
 
@@ -55,6 +58,11 @@ public class RBHttpResponse extends DefaultFullHttpResponse {
         }
     }
 
+
+    public void addCookie(Cookie cookie){
+
+        headers().add("Set-Cookie", ServerCookieEncoder.STRICT.encode(cookie));
+    }
 
 
 }

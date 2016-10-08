@@ -9,9 +9,11 @@ import com.rodbate.httpserver.http.RBHttpResponse;
 import com.rodbate.httpserver.http.RequestMethod;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.*;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +60,9 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
             String uri = request.uri();
 
+
+            uri = URLDecoder.decode(uri, "UTF-8");
+
             //处理浏览器favicon.ico请求
             if ("/favicon.ico".equals(uri)) {
 
@@ -76,7 +81,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
                 resp.setHeader("Content-Type", "image/x-icon");
                 resp.setHeader("Content-Length", bytes.length);
 
-                ctx.channel().writeAndFlush(resp);
+                ctx.channel().writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
 
             }
 
@@ -105,10 +110,17 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
                     boolean methodAllow = false;
 
-                    for (RequestMethod rm : requestMethod) {
-                        if (method.name().equals(rm.getDesc())) {
-                            methodAllow = true;
-                            break;
+                    //处理请求方法为空 默认为ALL 的情况
+                    if (requestMethod.size() == 1 && requestMethod.get(0).getDesc().equals("ALL")){
+                        methodAllow = true;
+                    }
+
+                    else {
+                        for (RequestMethod rm : requestMethod) {
+                            if (method.name().equals(rm.getDesc())) {
+                                methodAllow = true;
+                                break;
+                            }
                         }
                     }
 
@@ -172,7 +184,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
         }*/
 
 
-        if (msg instanceof HttpContent) {
+        if (request.method() != HttpMethod.GET && msg instanceof HttpContent) {
 
             try {
 
@@ -235,11 +247,11 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
          *
          ------WebKitFormBoundarynAeQKcYWF5Dz5XAt   0
          Content-Disposition: form-data; name="a"   1
-         (空行)                                   2
+         (空行)                                      2
          1111                                       3
          ------WebKitFormBoundarynAeQKcYWF5Dz5XAt   4
          Content-Disposition: form-data; name="b"   5
-         (空行)                                   6
+         (空行)                                      6
          dfsfsd                                     7
          ------WebKitFormBoundarynAeQKcYWF5Dz5XAt-- 8
 
@@ -247,7 +259,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
          *
          */
 
-        if (requestContentType.startsWith(MULTIPART_FORM_DATA)){
+        if (isNotNull(requestContentType) && requestContentType.startsWith(MULTIPART_FORM_DATA)){
 
 
             LOG.info("================= post body ======= {}", rs);
@@ -302,7 +314,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
         //text/plain; charset=UTF-8
 
-        if (requestContentType.startsWith(TEXT_PLAIN)) {
+        if (isNotNull(requestContentType) && requestContentType.startsWith(TEXT_PLAIN)) {
 
             LOG.info("================= post body ======= {}", rs);
             if (rs.contains("&")) {
@@ -323,7 +335,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
         //application/json; charset=UTF-8
 
-        if (requestContentType.startsWith(APPLICATION_JSON)) {
+        if (isNotNull(requestContentType) && requestContentType.startsWith(APPLICATION_JSON)) {
 
             request.setJsonString(rs);
         }
@@ -352,7 +364,16 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
         response.setHeader("Content-Length", buffer.readableBytes());
 
-        ctx.channel().writeAndFlush(response);
+
+        // Connection: keep-alive
+        if (HttpUtil.isKeepAlive(request)) {
+            ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+        }
+
+        //  Connection: close
+        else {
+            ctx.channel().writeAndFlush(response);
+        }
     }
 
 
@@ -391,7 +412,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
         resp.setHeader("Content-Type", "text/html");
         resp.setHeader("Content-Length", content.readableBytes());
 
-        ctx.channel().writeAndFlush(resp);
+        ctx.channel().writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
 
     }
 
@@ -412,15 +433,21 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
         } catch (Exception e) {
             //e.printStackTrace();
             try {
-                resp = method.invoke(instance, request);
+                if (e instanceof IllegalArgumentException) {
+                    resp = method.invoke(instance, request);
+                }
             } catch (Exception e1) {
                 //e1.printStackTrace();
                 try {
-                    resp = method.invoke(instance, response);
+                    if (e1 instanceof IllegalArgumentException) {
+                        resp = method.invoke(instance, response);
+                    }
                 } catch (Exception e2) {
                     //e2.printStackTrace();
                     try {
-                        resp = method.invoke(instance);
+                        if (e2 instanceof IllegalArgumentException) {
+                            resp = method.invoke(instance);
+                        }
                     } catch (Exception e3) {
                         //ignore
                         //e3.printStackTrace();
