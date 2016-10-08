@@ -190,7 +190,12 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
     }
 
 
-
+    /**
+     * 处理post请求体
+     *
+     * @param msg 请求体信息
+     * @throws UnsupportedEncodingException ex
+     */
     public void handlePostBody(HttpObject msg) throws UnsupportedEncodingException {
 
         HttpContent content = (HttpContent) msg;
@@ -358,6 +363,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
      * @param ctx ChannelHandlerContext
      * @param request 请求
      * @param pagePath 页面路径
+     * @param status http response status
      * @throws IOException ex
      */
     public void handlePageResponse(
