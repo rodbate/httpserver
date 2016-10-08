@@ -78,7 +78,7 @@ public class Bootstrap {
 
     public static void initProperties(){
 
-        InputStream is = ClassLoader.getSystemResourceAsStream("server.properties");
+        InputStream is = ClassLoader.getSystemResourceAsStream("httpserver.properties");
 
         Properties props = new Properties();
 
