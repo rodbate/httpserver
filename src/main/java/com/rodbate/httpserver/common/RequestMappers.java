@@ -2,7 +2,6 @@ package com.rodbate.httpserver.common;
 
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.serializer.ListSerializer;
 import com.rodbate.httpserver.annotations.RequestMapping;
 import com.rodbate.httpserver.http.RequestMethod;
 import org.slf4j.Logger;

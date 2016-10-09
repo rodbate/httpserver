@@ -1,7 +1,6 @@
 package com.rodbate.httpserver.test;
 
 
-import com.alibaba.fastjson.JSON;
 import com.rodbate.httpserver.annotations.RequestMapping;
 import com.rodbate.httpserver.http.RBHttpRequest;
 import com.rodbate.httpserver.http.RBHttpResponse;
@@ -42,8 +41,18 @@ public class RequestTest {
             e.printStackTrace();
         }
 
-        return requestc.toString();
+        Ret ret = new Ret(1, "ret");
+        return ret;
     }
 
+    class Ret{
+        private int type;
+        private String desc;
+
+        public Ret(int type, String desc) {
+            this.type = type;
+            this.desc = desc;
+        }
+    }
 
 }

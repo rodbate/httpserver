@@ -15,6 +15,9 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 
+import static com.rodbate.httpserver.common.HeaderNameValue.*;
+
+
 /**
  *
  * http request
@@ -129,7 +132,7 @@ public class RBHttpRequest extends DefaultHttpRequest {
     public Set<Cookie> getCookie(){
         Set<Cookie> cookies;
 
-        String value = headers().get("Cookie");
+        String value = headers().get(COOKIE);
 
         if (StringUtil.isNull(value)) {
             cookies = Collections.emptySet();

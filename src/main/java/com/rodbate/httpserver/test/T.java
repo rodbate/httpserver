@@ -16,7 +16,7 @@ import java.util.Set;
 public class T {
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         Bootstrap.main();
     }

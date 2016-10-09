@@ -3,9 +3,11 @@ package com.rodbate.httpserver.http;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.cookie.*;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
+
+
+import static com.rodbate.httpserver.common.HeaderNameValue.*;
 
 public class RBHttpResponse extends DefaultFullHttpResponse {
 
@@ -53,15 +55,15 @@ public class RBHttpResponse extends DefaultFullHttpResponse {
     }
 
     public void setContentTypeIfAbsent(){
-        if (headers().get("Content-Type") == null) {
-            headers().set("Content-Type", "application/json; charset=UTF-8");
+        if (headers().get(CONTENT_TYPE) == null) {
+            headers().set(CONTENT_TYPE, "application/json; charset=UTF-8");
         }
     }
 
 
     public void addCookie(Cookie cookie){
 
-        headers().add("Set-Cookie", ServerCookieEncoder.STRICT.encode(cookie));
+        headers().add(SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
     }
 
 

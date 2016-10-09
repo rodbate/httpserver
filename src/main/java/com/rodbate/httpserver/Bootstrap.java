@@ -14,10 +14,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.ServerSocket;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+
+
+import static com.rodbate.httpserver.common.StringUtil.*;
+import static com.rodbate.httpserver.common.ServerConfig.*;
+import static com.rodbate.httpserver.Version.*;
 
 /**
  *
@@ -28,13 +29,8 @@ public class Bootstrap {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Bootstrap.class);
 
-    private static int PORT;
 
-
-
-    private final static Map<String, Object> properties = new HashMap<>();
-
-    public static void main() {
+    public static void main() throws Exception {
 
         long start = System.currentTimeMillis();
 
@@ -46,7 +42,13 @@ public class Bootstrap {
 
         initProperties();
 
-        PORT = Integer.valueOf(getProperty("port"));
+        String portStr = getProperty("port");
+
+        if (isNull(portStr)) throw new RuntimeException("port must not be null");
+
+        int port = Integer.valueOf(portStr);
+
+        String hostname = getProperty("hostname");
 
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -60,21 +62,28 @@ public class Bootstrap {
                     .handler(new LoggingHandler(LogLevel.INFO))
                     .childHandler(new HttpServerInitializerFactory());
 
-            isBindPort(PORT);
+            isBindPort(port);
 
-            Channel channel = bootstrap.bind(PORT).sync().channel();
+            Channel channel;
+
+            if (isNull(hostname)) {
+                channel = bootstrap.bind(port).sync().channel();
+            } else {
+                channel = bootstrap.bind(hostname, port).sync().channel();
+            }
 
             printLogo();
 
             RequestMappers.init();
 
             LOGGER.info("========>>>>>>>> Http Server Start Up ! Using Time [{}MS]", System.currentTimeMillis() - start);
-            LOGGER.info("========>>>>>>>> Open your web browser and navigate to http://127.0.0.1:" + PORT);
+            LOGGER.info("========>>>>>>>> Open your web browser and navigate to http://{}:{}", isNull(hostname) ? "127.0.0.1" : hostname, port);
 
             channel.closeFuture().sync();
 
         } catch (Exception e){
             //
+            LOGGER.error(e.getMessage(), e);
         } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
@@ -107,46 +116,19 @@ public class Bootstrap {
     }
 
 
-    public static void initProperties(){
-
-        InputStream is = ClassLoader.getSystemResourceAsStream("httpserver.properties");
-
-        Properties props = new Properties();
-
-        try {
-            props.load(is);
-
-            Enumeration<?> names = props.propertyNames();
-
-            while (names.hasMoreElements()) {
-
-                String name = String.valueOf(names.nextElement());
-
-                Object value = props.get(name);
-
-                properties.put(name, value);
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    public static String getProperty(String name){
-        return String.valueOf(properties.get(name));
-    }
-
 
     private static void printLogo(){
 
         StringBuilder logo = new StringBuilder();
+
 
         InputStream is;
 
         BufferedReader br = null;
 
         String separator = System.getProperty("line.separator", "\n");
+
+        logo.append(separator);
 
         try {
 
@@ -156,8 +138,15 @@ public class Bootstrap {
 
             String line;
 
+            String line2;
+
             while ((line = br.readLine()) != null){
-                logo.append(line).append(separator);
+                logo.append(line);
+                if ((line2 = br.readLine()) == null) {
+                    logo.append("VERSION : ").append(VERSION).append(separator);
+                } else {
+                    logo.append(separator).append(line2).append(separator);
+                }
             }
 
 
@@ -177,6 +166,7 @@ public class Bootstrap {
             }
         }
 
-        System.out.println(logo.toString());
+        //System.out.println(logo.toString());
+        LOGGER.info(logo.toString());
     }
 }

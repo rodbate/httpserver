@@ -1,7 +1,11 @@
 package com.rodbate.httpserver.common;
 
 
+import java.io.File;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+import java.util.TimeZone;
 
 public class ServerConstants {
 
@@ -23,5 +27,26 @@ public class ServerConstants {
 
 
     public static final String LINE_SEPARATOR = System.getProperty("line.separator");
+
+
+    //Mon, 10 Oct 2016 06:20:27 GMT
+    public static final String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy hh:mm:ss zzz";
+
+
+    public static final String HTTP_DATE_FORMAT_TIMEZONE = "GMT";
+
+
+    public static final SimpleDateFormat HTTP_SIMPLE_DATE_FORMATTER =
+            new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US) {
+                {
+                    super.setTimeZone(TimeZone.getTimeZone(HTTP_DATE_FORMAT_TIMEZONE));
+                }
+            };
+
+
+
+    public static final String DEFAULT_DOWNLOAD_PATH =
+            System.getProperty("user.home") + File.separator + "httpserverdownload";
+
 
 }

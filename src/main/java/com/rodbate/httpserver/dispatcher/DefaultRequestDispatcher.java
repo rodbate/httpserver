@@ -2,8 +2,8 @@ package com.rodbate.httpserver.dispatcher;
 
 
 
-import com.alibaba.fastjson.JSON;
 import com.rodbate.httpserver.common.RequestMeta;
+import com.rodbate.httpserver.http.FileHandler;
 import com.rodbate.httpserver.http.RBHttpRequest;
 import com.rodbate.httpserver.http.RBHttpResponse;
 import com.rodbate.httpserver.http.RequestMethod;
@@ -13,7 +13,6 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.*;
-import io.netty.util.concurrent.GenericFutureListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +27,8 @@ import java.util.List;
 import static com.rodbate.httpserver.common.RequestMappers.*;
 import static com.rodbate.httpserver.common.ServerConstants.*;
 import static com.rodbate.httpserver.common.StringUtil.*;
+import static com.rodbate.httpserver.common.HeaderNameValue.*;
+import static com.rodbate.httpserver.common.ServerConfig.*;
 
 
 
@@ -63,7 +64,9 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
             uri = URLDecoder.decode(uri, "UTF-8");
 
-            //处理浏览器favicon.ico请求
+
+
+            //处理浏览器/favicon.ico请求
             if ("/favicon.ico".equals(uri)) {
 
                 InputStream is = getClass().getResourceAsStream("/ico/httpserver.ico");
@@ -78,8 +81,9 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
                 RBHttpResponse resp = new RBHttpResponse(request.protocolVersion(), HttpResponseStatus.OK, response);
 
-                resp.setHeader("Content-Type", "image/x-icon");
-                resp.setHeader("Content-Length", bytes.length);
+                resp.setHeader(CONTENT_TYPE, "image/x-icon");
+                resp.setHeader(CONTENT_LENGTH, bytes.length);
+                resp.setHeader(CONNECTION, CLOSE);
 
                 ctx.channel().writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
 
@@ -93,6 +97,34 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
             else {
 
                 HttpMethod method = request.method();
+
+                //处理文件下载
+                if (method == HttpMethod.GET) {
+
+                    String downloadPath = getProperty("downloadPath");
+
+                    if (isNull(downloadPath)) {
+                        downloadPath = DEFAULT_DOWNLOAD_PATH;
+                    }
+
+                    //去除路径最后文件路径分隔符   /usr/local/ -->/usr/local  C:\\a\\ --> C:\\a
+                    if (downloadPath.endsWith(File.separator)) {
+                        downloadPath = downloadPath.substring(0, downloadPath.lastIndexOf(File.separator));
+                    }
+
+                    String fileName = uri.replace("/", File.separator);
+
+                    downloadPath = downloadPath + fileName;
+
+                    LOG.info("===== ==============  download file path : "  + downloadPath);
+
+                    boolean download = FileHandler.download(ctx, request, downloadPath);
+
+                    if (download) {
+                        return;
+                    }
+
+                }
 
                 uri = parseUrl(uri, request);
 
@@ -218,7 +250,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
         rs = URLDecoder.decode(rs, "UTF-8");
 
-        String requestContentType = request.getHeaderByName("Content-Type");
+        String requestContentType = request.getHeaderByName(CONTENT_TYPE);
 
         LOG.info("================= request content type ======= {}", requestContentType);
 
@@ -350,29 +382,32 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
         Method m = meta.getMethod();
 
-        response.setHeader("Content-Type", meta.getResponseContentType());
+        response.setHeader(CONTENT_TYPE, meta.getResponseContentType());
 
         Object resp = invokeMethod(target, m, request, response);
 
-        String sb = JSON.toJSONString(resp);
+        StringBuilder sb = new StringBuilder();
+        sb.append(resp);
 
-        ByteBuf buffer = Unpooled.copiedBuffer(sb.getBytes());
+        ByteBuf buffer = Unpooled.copiedBuffer(sb.toString().getBytes());
 
         response = response.setContent(response, buffer);
 
         response.setContentTypeIfAbsent();
 
-        response.setHeader("Content-Length", buffer.readableBytes());
+        response.setHeader(CONTENT_LENGTH, buffer.readableBytes());
 
 
         // Connection: keep-alive
         if (HttpUtil.isKeepAlive(request)) {
-            ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+            response.setHeader(CONNECTION, KEEP_ALIVE);
+            ctx.channel().writeAndFlush(response);
         }
 
         //  Connection: close
         else {
-            ctx.channel().writeAndFlush(response);
+            response.setHeader(CONNECTION, CLOSE);
+            ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
         }
     }
 
@@ -409,8 +444,9 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
         RBHttpResponse resp = new RBHttpResponse(request.protocolVersion(), status, content);
 
-        resp.setHeader("Content-Type", "text/html");
-        resp.setHeader("Content-Length", content.readableBytes());
+        resp.setHeader(CONTENT_TYPE, "text/html");
+        resp.setHeader(CONTENT_LENGTH, content.readableBytes());
+        resp.setHeader(CONNECTION, CLOSE);
 
         ctx.channel().writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
 
