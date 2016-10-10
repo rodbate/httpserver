@@ -212,7 +212,7 @@ public class SimpleDownloadClient {
             @Override
             public void run() {
                 while (true) {
-                    double percent = Double.valueOf(df.format(Double.valueOf(sum * 1.0 / fileLength) * 100));
+                    double percent = Double.valueOf(df.format((sum * 1.0 / fileLength) * 100));
                     System.out.println("============== download percent ===== >>> : " + sum + "/" + fileLength + "     " + percent + "%");
                     try {
                         Thread.sleep(1000);
