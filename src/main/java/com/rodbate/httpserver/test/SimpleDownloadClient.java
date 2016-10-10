@@ -7,6 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +20,10 @@ public class SimpleDownloadClient {
 
 
     public static final int PROCESSORS = Runtime.getRuntime().availableProcessors();
+
+    static volatile long sum = 0;
+
+    public static long fileLength;
 
 
     //获取文件长度
@@ -34,6 +39,8 @@ public class SimpleDownloadClient {
                 connection.connect();
 
                 length = Long.valueOf(connection.getHeaderField("Content-Length"));
+
+                fileLength = length;
 
                 connection.disconnect();
 
@@ -102,6 +109,9 @@ public class SimpleDownloadClient {
         return map;
     }
 
+    public synchronized static void inc(long size) {
+        sum += size;
+    }
 
     public static HttpURLConnection getConnection(String urlStr) {
 
@@ -127,7 +137,10 @@ public class SimpleDownloadClient {
 
         CountDownLatch signal = new CountDownLatch(PROCESSORS);
 
-        String urlStr = "http://127.0.0.1:8888/1.exe";
+
+
+
+        String urlStr = "https://www.python.org/ftp/python/3.5.2/python-3.5.2.exe";
 
         Map<Integer, List<Long>> map = handleLengthPerThread(urlStr);
 
@@ -172,7 +185,7 @@ public class SimpleDownloadClient {
                             byte ba[] = new byte[1024];
 
                             while ((len = is.read(ba)) > 0) {
-
+                                inc(len);
                                 fos.write(ba, 0, len);
                             }
 
@@ -193,6 +206,22 @@ public class SimpleDownloadClient {
             });
         }
 
+        DecimalFormat df = new DecimalFormat("####.00");
+
+        new Thread(){
+            @Override
+            public void run() {
+                while (true) {
+                    double percent = Double.valueOf(df.format(Double.valueOf(sum * 1.0 / fileLength) * 100));
+                    System.out.println("============== download percent ===== >>> : " + sum + "/" + fileLength + "     " + percent + "%");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
 
         //
         try {
@@ -205,7 +234,7 @@ public class SimpleDownloadClient {
         service.shutdown();
 
         //合并文件
-        gatherTempFiles(dir, "temp_centos_", "vm.exe");
+        gatherTempFiles(dir, "temp_centos_", "python.exe");
 
     }
 
