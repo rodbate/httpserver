@@ -1,7 +1,6 @@
 package com.rodbate.httpserver.http;
 
 
-import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
@@ -9,16 +8,13 @@ import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 
 import static com.rodbate.httpserver.common.HeaderNameValue.*;
 
-public class RBHttpResponse extends DefaultFullHttpResponse {
+public class RBHttpResponse extends DefaultHttpResponse {
 
 
     public RBHttpResponse(HttpVersion version, HttpResponseStatus status) {
         super(version, status);
     }
 
-    public RBHttpResponse(HttpVersion version, HttpResponseStatus status, ByteBuf content) {
-        super(version, status, content);
-    }
 
     public RBHttpResponse(HttpVersion version, HttpResponseStatus status, boolean validateHeaders) {
         super(version, status, validateHeaders);
@@ -28,27 +24,6 @@ public class RBHttpResponse extends DefaultFullHttpResponse {
         super(version, status, validateHeaders, singleFieldHeaders);
     }
 
-    public RBHttpResponse(HttpVersion version, HttpResponseStatus status, ByteBuf content, boolean validateHeaders) {
-        super(version, status, content, validateHeaders);
-    }
-
-    public RBHttpResponse(HttpVersion version, HttpResponseStatus status, ByteBuf content, boolean validateHeaders, boolean singleFieldHeaders) {
-        super(version, status, content, validateHeaders, singleFieldHeaders);
-    }
-
-    public RBHttpResponse(HttpVersion version, HttpResponseStatus status, ByteBuf content, HttpHeaders headers, HttpHeaders trailingHeaders) {
-        super(version, status, content, headers, trailingHeaders);
-    }
-
-
-    public RBHttpResponse setContent(RBHttpResponse response, ByteBuf content){
-        return new RBHttpResponse(
-                                    response.protocolVersion(),
-                                    response.status(),
-                                    content,
-                                    response.headers(),
-                                    response.trailingHeaders());
-    }
 
     public void setHeader(String name, Object value){
         headers().set(name, value);
@@ -62,7 +37,6 @@ public class RBHttpResponse extends DefaultFullHttpResponse {
 
 
     public void addCookie(Cookie cookie){
-
         headers().add(SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
     }
 

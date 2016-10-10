@@ -47,4 +47,13 @@ public class HeaderNameValue {
 
     public static final String IF_NONE_MATCH = "If-None-Match";
 
+    public static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
+
+    //Range: bytes=1-100
+    public static final String RANGE = "Range";
+
+    //Content-Range: bytes 1-100/100
+    public static final String CONTENT_RANGE = "Content-Range";
+
+
 }

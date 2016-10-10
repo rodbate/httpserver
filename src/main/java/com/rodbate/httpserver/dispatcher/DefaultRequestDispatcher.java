@@ -9,6 +9,7 @@ import com.rodbate.httpserver.http.RBHttpResponse;
 import com.rodbate.httpserver.http.RequestMethod;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
@@ -79,13 +80,14 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
                 ByteBuf response = Unpooled.copiedBuffer(bytes);
 
-                RBHttpResponse resp = new RBHttpResponse(request.protocolVersion(), HttpResponseStatus.OK, response);
+                RBHttpResponse resp = new RBHttpResponse(request.protocolVersion(), HttpResponseStatus.OK);
 
                 resp.setHeader(CONTENT_TYPE, "image/x-icon");
                 resp.setHeader(CONTENT_LENGTH, bytes.length);
-                resp.setHeader(CONNECTION, CLOSE);
+                //resp.setHeader(CONNECTION, CLOSE);
 
-                ctx.channel().writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
+                ctx.channel().write(resp);
+                ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 
             }
 
@@ -391,7 +393,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
         ByteBuf buffer = Unpooled.copiedBuffer(sb.toString().getBytes());
 
-        response = response.setContent(response, buffer);
+        //response = response.setContent(response, buffer);
 
         response.setContentTypeIfAbsent();
 
@@ -401,14 +403,20 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
         // Connection: keep-alive
         if (HttpUtil.isKeepAlive(request)) {
             response.setHeader(CONNECTION, KEEP_ALIVE);
-            ctx.channel().writeAndFlush(response);
+            //ctx.channel().writeAndFlush(response);
         }
 
-        //  Connection: close
+        /*//  Connection: close
         else {
             response.setHeader(CONNECTION, CLOSE);
             ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-        }
+        }*/
+
+        ctx.channel().write(response);
+        ctx.channel().writeAndFlush(buffer).addListener(ChannelFutureListener.CLOSE);
+        /*if (!HttpUtil.isKeepAlive(request)){
+            finish.addListener(ChannelFutureListener.CLOSE);
+        }*/
     }
 
 
@@ -442,13 +450,14 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
         ByteBuf content = Unpooled.copiedBuffer(sb.toString().getBytes());
 
-        RBHttpResponse resp = new RBHttpResponse(request.protocolVersion(), status, content);
+        RBHttpResponse resp = new RBHttpResponse(request.protocolVersion(), status);
 
         resp.setHeader(CONTENT_TYPE, "text/html");
         resp.setHeader(CONTENT_LENGTH, content.readableBytes());
-        resp.setHeader(CONNECTION, CLOSE);
 
-        ctx.channel().writeAndFlush(resp).addListener(ChannelFutureListener.CLOSE);
+        ctx.channel().write(resp);
+
+        ctx.channel().writeAndFlush(content).addListener(ChannelFutureListener.CLOSE);
 
     }
 

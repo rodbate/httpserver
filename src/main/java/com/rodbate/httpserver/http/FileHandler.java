@@ -1,11 +1,6 @@
 package com.rodbate.httpserver.http;
 
-
-import com.sun.activation.registries.MimeTypeFile;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
@@ -13,7 +8,6 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -73,7 +67,6 @@ public class FileHandler {
         File file = new File(filePath);
 
         if (file.isHidden() || !file.exists()) {
-            sendError(ctx, NOT_FOUND);
             return false;
         }
 
@@ -109,11 +102,9 @@ public class FileHandler {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             LOGGER.error(e.getMessage(), e);
-            sendError(ctx, NOT_FOUND);
             return false;
         }
 
-        // TODO: 2016/10/9 0009  断点续传
 
 
         long fileLength;
@@ -122,58 +113,111 @@ public class FileHandler {
         } catch (IOException e) {
             e.printStackTrace();
             LOGGER.error(e.getMessage(), e);
-            sendError(ctx, NOT_FOUND);
             return false;
         }
 
+        // TODO: 2016/10/9 0009  断点续传
+        //文件下载开始位置
+        long startPos;
 
-        /*String separator = System.getProperty("line.separator", "\n");
-        StringBuilder sb = new StringBuilder();
+        //文件下载结束位置
+        long endPos;
 
-        try {
-            String line;
-            while ((line = raf.readLine()) != null){
-                sb.append(line).append(separator);
-            };
-        } catch (IOException e) {
-            e.printStackTrace();
+        //文件下载长度
+        long transferLength;
+
+        //Range: bytes=0-1000
+        String requestRange = request.getHeaderByName(RANGE);
+
+        RBHttpResponse response;
+
+        if (isNotNull(requestRange)) {
+
+            //Range: bytes=0-1000   Range: bytes=0-
+            String str = requestRange.trim().split("=")[1];
+
+            startPos = Long.valueOf(str.split("-")[0]);
+            if (str.split("-").length == 2) {
+                endPos = Long.valueOf(str.split("-")[1]);
+                if (endPos + 1 > fileLength) {
+                    endPos = fileLength - 1;
+                }
+            } else {
+                endPos = fileLength - 1;
+            }
+
+            transferLength = endPos - startPos + 1;
+            response = new RBHttpResponse(HttpVersion.HTTP_1_1, PARTIAL_CONTENT);
+
+            response.setHeader(CONTENT_RANGE, String.format("bytes %d-%d/%d", startPos, endPos, transferLength));
+        } else {
+            startPos = 0;
+            endPos = fileLength - 1;
+            transferLength = fileLength;
+            response = new RBHttpResponse(HttpVersion.HTTP_1_1, OK);
         }
-        //response.setContent(response, Unpooled.copiedBuffer(files));
 
-        RBHttpResponse response = new RBHttpResponse(HttpVersion.HTTP_1_1, OK, Unpooled.copiedBuffer(sb.toString().getBytes()));
-*/
 
-        RBHttpResponse response = new RBHttpResponse(HttpVersion.HTTP_1_1, OK);
 
-        response.setHeader(CONTENT_LENGTH, fileLength);
+
+        response.setHeader(CONTENT_LENGTH, transferLength);
 
         if (HttpUtil.isKeepAlive(request)) {
             response.setHeader(CONNECTION, KEEP_ALIVE);
         }
 
-        setContentTypeHeader(response, file);
+        response.setHeader(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
 
         setDateAndCacheHeader(response, file);
 
-        ctx.pipeline().addLast(new ChunkedWriteHandler());
+        try {
+            ctx.pipeline().addBefore("dispatcher", "chunkWriter", new ChunkedWriteHandler());
+        } catch (IllegalArgumentException e) {
+            LOGGER.info("========== .>>>>>>>  chunkWriter handler exists");
+        }
 
 
         //先写出响应头
         ctx.channel().write(response);
 
+
         //写出响应体
-        ChannelFuture sendFileFuture =
-                ctx.channel().write(new DefaultFileRegion(raf.getChannel(), 0, fileLength), ctx.newProgressivePromise());
+       ChannelFuture sendFileFuture =
+                ctx.channel().write(new DefaultFileRegion(raf.getChannel(), startPos, transferLength), ctx.newProgressivePromise());
 
         ChannelFuture lastContentFuture =
                 ctx.channel().writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 
 
+        sendFileFuture.addListener(new ChannelProgressiveFutureListener() {
+            @Override
+            public void operationProgressed(ChannelProgressiveFuture future, long progress, long total) {
+                if (total < 0) {
+                    LOGGER.info("{} Transfer progress: {}", future.channel(), progress);
+                } else {
+                    LOGGER.info("{} Transfer progress: {} / {}", future.channel(), progress, total);
+                }
+
+            }
+
+            @Override
+            public void operationComplete(ChannelProgressiveFuture future) {
+                LOGGER.info("{}  Transfer complete.", future.channel());
+            }
+        });
 
 
+        if (!HttpUtil.isKeepAlive(request)) {
+
+            lastContentFuture.addListener(ChannelFutureListener.CLOSE);
+        }
+
+        //移除chunkWriter
+        ctx.pipeline().remove("chunkWriter");
 
         return true;
     }
+
 
     private static void setDateAndCacheHeader(RBHttpResponse response, File file) {
 
@@ -195,39 +239,19 @@ public class FileHandler {
         response.setHeader(LAST_MODIFIED, HTTP_SIMPLE_DATE_FORMATTER.format(new Date(file.lastModified())));
     }
 
-    private static void setContentTypeHeader(RBHttpResponse response, File file) {
-        MimetypesFileTypeMap mineType = new MimetypesFileTypeMap();
-        response.setHeader(CONTENT_TYPE, "application/octet-stream");
-    }
 
-
-    private static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status) {
-
-        ByteBuf byteBuf = Unpooled.copiedBuffer(("Failure : " + status.toString()).getBytes());
-
-        RBHttpResponse response = new RBHttpResponse(HttpVersion.HTTP_1_1, status, byteBuf);
-
-        response.setHeader(CONTENT_TYPE, "text/plain; charset=utf-8");
-        response.setHeader(CONTENT_LENGTH, byteBuf.readableBytes());
-        response.setHeader(CONNECTION, CLOSE);
-
-
-    }
 
 
     private static void sendNotModified(ChannelHandlerContext ctx) {
 
         RBHttpResponse response = new RBHttpResponse(HttpVersion.HTTP_1_1, NOT_MODIFIED);
 
-        setDateHeader(response);
+        response.setHeader(DATE, HTTP_SIMPLE_DATE_FORMATTER.format(new Date()));
 
         response.setHeader(CONNECTION, CLOSE);
         ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
-    private static void setDateHeader(RBHttpResponse response) {
-        response.setHeader(DATE, HTTP_SIMPLE_DATE_FORMATTER.format(new Date()));
-    }
 
 
 }

@@ -18,6 +18,8 @@ public class NetUtil {
 
     private static final String hostname = getProperty("hostname");
 
+    private static final String PORT = getProperty("port");
+
     private static final Logger LOGGER = LoggerFactory.getLogger(NetUtil.class);
 
     public static String getHttpHeaderHost(){
@@ -26,7 +28,7 @@ public class NetUtil {
 
         if (isNull(hostname)) {
             try {
-                host = InetAddress.getLocalHost().getHostName();
+                host = InetAddress.getLocalHost().getHostName() + ("80".equals(PORT) ? "" : ":" + PORT);
             } catch (UnknownHostException e) {
                 e.printStackTrace();
                 LOGGER.error(e.getMessage(), e);
@@ -35,12 +37,14 @@ public class NetUtil {
         } else {
 
             try {
-                host = InetAddress.getByName(hostname).getHostName();
+                host = InetAddress.getByName(hostname).getHostName() + ("80".equals(PORT) ? "" : ":" + PORT);
             } catch (UnknownHostException e) {
                 e.printStackTrace();
                 LOGGER.error(e.getMessage(), e);
             }
         }
+
+
         return host;
     }
 }

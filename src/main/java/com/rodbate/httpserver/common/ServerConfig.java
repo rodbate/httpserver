@@ -48,5 +48,5 @@ public class ServerConfig {
     }
 
 
-    public static final int HTTP_CACHE_SECONDS = 60;
+    public static final int HTTP_CACHE_SECONDS = 600;
 }
