@@ -219,6 +219,10 @@ public class SimpleDownloadClient {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
+                    if(sum == fileLength){
+                        System.out.println("============ download complete ==== >>>>>");
+                        break;
+                    }
                 }
             }
         }.start();
