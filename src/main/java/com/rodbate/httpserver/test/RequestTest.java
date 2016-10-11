@@ -8,7 +8,11 @@ import com.rodbate.httpserver.http.RequestMethod;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.DefaultCookie;
 
+import java.io.*;
 import java.util.Set;
+
+
+import static com.rodbate.httpserver.common.HeaderNameValue.*;
 
 @RequestMapping(value = "/api")
 public class RequestTest {
@@ -20,7 +24,7 @@ public class RequestTest {
 
 
 
-        Set<Cookie> cookie = request.getCookie();
+        /*Set<Cookie> cookie = request.getCookie();
         Cookie requestc = cookie.iterator().next();
         try {
 
@@ -41,8 +45,34 @@ public class RequestTest {
             e.printStackTrace();
         }
 
-        Ret ret = new Ret(1, "ret");
-        return ret;
+        Ret ret = new Ret(1, "ret");*/
+
+
+        /*File f = new File("D:\\temp\\CenOS.zip");
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(f);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        //InputStream
+        ByteArrayInputStream is = new ByteArrayInputStream("hhhhhhhhh".getBytes());
+
+        response.setHeader(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
+
+        response.setFileName("CenOS.zip");*/
+
+        //response.sendRedirect("http://www.baidu.com");
+
+        for (int i = 0; i < 2; i++) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return "success";
     }
 
     class Ret{

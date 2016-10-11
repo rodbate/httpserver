@@ -107,6 +107,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
                     if (isNull(downloadPath)) {
                         downloadPath = DEFAULT_DOWNLOAD_PATH;
+
                     }
 
                     //去除路径最后文件路径分隔符   /usr/local/ -->/usr/local  C:\\a\\ --> C:\\a
@@ -167,7 +168,6 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
                             LOG.info("=========== request chunk is {}  =======", readingChunk);
 
-                            decoder = new HttpPostRequestDecoder(FACTORY, request, DEFAULT_CHARSET);
 
                         }
 
@@ -185,37 +185,6 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
         }
 
 
-        /*if (decoder != null) {
-
-
-            if (msg instanceof HttpContent) {
-
-                HttpContent content = (HttpContent) msg;
-
-                decoder.offer(content);
-
-                while (decoder.hasNext()) {
-
-                    InterfaceHttpData data = decoder.next();
-
-                    if (data != null) {
-
-                        if (data instanceof Attribute) {
-
-                            Attribute attr = (Attribute) data;
-
-                            String name = attr.getName();
-                            String value = attr.getValue();
-
-                            request.setParameter(name, value);
-                        }
-                    }
-                }
-
-                dispatch0(ctx);
-            }
-
-        }*/
 
 
         if (request.method() != HttpMethod.GET && msg instanceof HttpContent) {
@@ -287,8 +256,11 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
          Content-Disposition: form-data; name="b"   5
          (空行)                                      6
          dfsfsd                                     7
-         ------WebKitFormBoundarynAeQKcYWF5Dz5XAt-- 8
-
+         ------WebKitFormBoundarynAeQKcYWF5Dz5XAt
+         Content-Disposition: form-data; name="file"; filename="test.txt"  //上传文件
+         Content-Type:
+         dfsfsd
+         ------WebKitFormBoundarynAeQKcYWF5Dz5XAt--
          *
          *
          */
@@ -333,7 +305,15 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
                         //处理value
                         if (i % 4 == 3){
                             value = lines.get(i);
-                            request.setParameter(name, value);
+                            String contentType = lines.get(i - 1);
+                            if (isNotNull(contentType)) {
+                                contentType = contentType.split(":")[1].trim();
+                                RBHttpRequest.UploadFile file = new RBHttpRequest.UploadFile();
+                                file.setContent(value);
+                            }
+                            else {
+                                request.setParameter(name, value);
+                            }
                         }
 
 
@@ -388,35 +368,74 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
         Object resp = invokeMethod(target, m, request, response);
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(resp);
-
-        ByteBuf buffer = Unpooled.copiedBuffer(sb.toString().getBytes());
-
-        //response = response.setContent(response, buffer);
-
-        response.setContentTypeIfAbsent();
-
-        response.setHeader(CONTENT_LENGTH, buffer.readableBytes());
-
-
         // Connection: keep-alive
         if (HttpUtil.isKeepAlive(request)) {
             response.setHeader(CONNECTION, KEEP_ALIVE);
-            //ctx.channel().writeAndFlush(response);
         }
 
-        /*//  Connection: close
-        else {
-            response.setHeader(CONNECTION, CLOSE);
-            ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-        }*/
+        //判断Content-Type : application/octet-stream
+        if (APPLICATION_OCTET_STREAM.equalsIgnoreCase(response.headers().get(CONTENT_TYPE))){
 
-        ctx.channel().write(response);
-        ctx.channel().writeAndFlush(buffer).addListener(ChannelFutureListener.CLOSE);
-        /*if (!HttpUtil.isKeepAlive(request)){
-            finish.addListener(ChannelFutureListener.CLOSE);
-        }*/
+            if (resp instanceof InputStream) {
+                InputStream is = (InputStream) resp;
+
+                byte b[] = new byte[4096];
+                int len;
+                //ctx.alloc().
+
+                try {
+
+                    response.setHeader(CONTENT_LENGTH, is.available());
+
+                    ctx.channel().write(response);
+
+                    while ((len = is.read(b)) > 0)
+                    {
+                        //sb.append(new String(b, 0, len));
+
+                        ByteBuf buffer = Unpooled.copiedBuffer(new String(b, 0, len, ISO_8859_1).getBytes(ISO_8859_1));
+                        ctx.channel().write(buffer);
+                    }
+                    ctx.channel().writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).addListener(ChannelFutureListener.CLOSE);
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (resp instanceof String) {
+
+                String str = (String) resp;
+
+                try {
+                    ByteBuf buffer = Unpooled.copiedBuffer(str.getBytes(ISO_8859_1));
+
+                    response.setHeader(CONTENT_LENGTH, buffer.readableBytes());
+
+                    ctx.channel().write(response);
+                    ctx.channel().writeAndFlush(buffer).addListener(ChannelFutureListener.CLOSE);
+
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        } else {
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(resp);
+
+            ByteBuf buffer = Unpooled.copiedBuffer(sb.toString().getBytes());
+
+            response.setContentTypeIfAbsent();
+
+            response.setHeader(CONTENT_LENGTH, buffer.readableBytes());
+
+
+            ctx.channel().write(response);
+            ctx.channel().writeAndFlush(buffer).addListener(ChannelFutureListener.CLOSE);
+        }
+
     }
 
 

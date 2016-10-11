@@ -2,6 +2,8 @@ package com.rodbate.httpserver.test;
 
 
 
+import com.rodbate.httpserver.common.StringUtil;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -140,7 +142,7 @@ public class SimpleDownloadClient {
 
 
 
-        String urlStr = "https://www.python.org/ftp/python/3.5.2/python-3.5.2.exe";
+        String urlStr = "http://file.allitebooks.com/20150615/Getting Started with Impala.pdf";
 
         Map<Integer, List<Long>> map = handleLengthPerThread(urlStr);
 
@@ -149,6 +151,8 @@ public class SimpleDownloadClient {
         if (!dir.exists()){
             dir.mkdirs();
         }
+
+        final String[] filename = new String[1];
 
         for (int i = 1; i <= PROCESSORS; i++) {
 
@@ -171,16 +175,35 @@ public class SimpleDownloadClient {
 
                         if (responseCode == 200 || responseCode == 206){
 
+
+
+                            String disposition = connection.getHeaderField("Disposition");
+
+                            System.out.println("============ disposition : " + disposition);
+
+                            //Disposition: attachment; filename=tt.xx
+                            if (StringUtil.isNotNull(disposition)) {
+
+                                filename[0] = disposition.split(";")[1].split("=")[1];
+                            } else {
+                                filename[0] = urlStr.substring(urlStr.lastIndexOf("/") + 1);
+                                //filename[0] = "download";
+                            }
+
                             InputStream is = connection.getInputStream();
 
-                            File f = new File("D:\\temp\\temp_centos_" + j);
+                            File f = new File("D:\\temp\\temp_" + filename[0] + "_" + j);
 
                             if (!f.exists()) {
                                 f.createNewFile();
                             }
 
-                            FileOutputStream fos = new FileOutputStream(f);
+                            FileOutputStream fos = new FileOutputStream(f, true);
 
+                            //元数据
+                            //FileOutputStream metafos = new FileOutputStream(new File(""));
+
+                            int sum = 0;
                             int len;
                             byte ba[] = new byte[1024];
 
@@ -220,6 +243,7 @@ public class SimpleDownloadClient {
                         e.printStackTrace();
                     }
                     if(sum == fileLength){
+                        System.out.println("============== download percent ===== >>> : " + sum + "/" + fileLength + "     " + percent + "%");
                         System.out.println("============ download complete ==== >>>>>");
                         break;
                     }
@@ -238,7 +262,7 @@ public class SimpleDownloadClient {
         service.shutdown();
 
         //合并文件
-        gatherTempFiles(dir, "temp_centos_", "python.exe");
+        gatherTempFiles(dir, "temp_" + filename[0] + "_", filename[0]);
 
     }
 

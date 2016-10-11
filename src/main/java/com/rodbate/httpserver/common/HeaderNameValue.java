@@ -55,5 +55,8 @@ public class HeaderNameValue {
     //Content-Range: bytes 1-100/100
     public static final String CONTENT_RANGE = "Content-Range";
 
+    //"Content-Disposition", "attachment; filename=xxx.txt"
+    public static final String CONTENT_DISPOSITION = "Content-Disposition";
+
 
 }

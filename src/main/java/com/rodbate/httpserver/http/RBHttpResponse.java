@@ -1,10 +1,15 @@
 package com.rodbate.httpserver.http;
 
 
+import com.rodbate.httpserver.common.StringUtil;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
 
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Objects;
 
 import static com.rodbate.httpserver.common.HeaderNameValue.*;
 
@@ -35,10 +40,39 @@ public class RBHttpResponse extends DefaultHttpResponse {
         }
     }
 
+    public void setHeaderIfAbsent(String name, Object value){
+
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(value);
+
+        if (headers().get(name) == null){
+            headers().set(name, value);
+        }
+    }
 
     public void addCookie(Cookie cookie){
         headers().add(SET_COOKIE, ServerCookieEncoder.STRICT.encode(cookie));
     }
 
 
+    //Content-Disposition: attachment; filename=xxx.txt
+    public void setFileName(String fileName) {
+
+        if (StringUtil.isNull(fileName)) throw new RuntimeException("filename must not be null");
+
+        try {
+            headers().set(CONTENT_DISPOSITION, "attachment; filename=" + URLEncoder.encode(fileName.trim(), "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendRedirect(String url){
+
+        if (StringUtil.isNull(url)) throw new RuntimeException("url must not be null");
+
+        setStatus(HttpResponseStatus.SEE_OTHER);
+
+        headers().set(LOCATION, url);
+    }
 }
