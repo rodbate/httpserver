@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import io.netty.handler.codec.http.multipart.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -27,42 +28,6 @@ import static com.rodbate.httpserver.common.HeaderNameValue.*;
 
 public class RBHttpRequest extends DefaultHttpRequest {
 
-    //上传文件
-    private UploadFile uploadFile;
-
-
-    public static class UploadFile{
-
-        private String filename;
-
-        private String contentType;
-
-        private String content;
-
-        public String getFilename() {
-            return filename;
-        }
-
-        public void setFilename(String filename) {
-            this.filename = filename;
-        }
-
-        public String getContentType() {
-            return contentType;
-        }
-
-        public void setContentType(String contentType) {
-            this.contentType = contentType;
-        }
-
-        public String getContent() {
-            return content;
-        }
-
-        public void setContent(String content) {
-            this.content = content;
-        }
-    }
 
 
     public RBHttpRequest(HttpVersion httpVersion, HttpMethod method, String uri) {
@@ -153,13 +118,7 @@ public class RBHttpRequest extends DefaultHttpRequest {
 
     }
 
-    public UploadFile getUploadFile() {
-        return uploadFile;
-    }
 
-    public void setUploadFile(UploadFile uploadFile) {
-        this.uploadFile = uploadFile;
-    }
 
     public String getHeaderByName(String name){
         return headers().get(name);

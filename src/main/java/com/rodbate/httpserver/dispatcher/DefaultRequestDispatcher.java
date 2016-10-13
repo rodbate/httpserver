@@ -24,6 +24,7 @@ import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.rodbate.httpserver.common.RequestMappers.*;
 import static com.rodbate.httpserver.common.ServerConstants.*;
@@ -246,21 +247,22 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
 
         /**
-         *Content-Type = multipart/form-data; boundary=----WebKitFormBoundaryGzGFIXxIloOfAyym
+         *Content-Type = multipart/form-data; boundary=--WebKitFormBoundarynAeQKcYWF5Dz5XAt
          *
-         ------WebKitFormBoundarynAeQKcYWF5Dz5XAt   0
+         ----WebKitFormBoundarynAeQKcYWF5Dz5XAt     0     //--{bound}   start
          Content-Disposition: form-data; name="a"   1
-         (空行)                                      2
+         (空行)\r\n                                  2
          1111                                       3
-         ------WebKitFormBoundarynAeQKcYWF5Dz5XAt   4
+         ----WebKitFormBoundarynAeQKcYWF5Dz5XAt     4
          Content-Disposition: form-data; name="b"   5
-         (空行)                                      6
+         (空行) \r\n                                 6
          dfsfsd                                     7
-         ------WebKitFormBoundarynAeQKcYWF5Dz5XAt
+         ----WebKitFormBoundarynAeQKcYWF5Dz5XAt
          Content-Disposition: form-data; name="file"; filename="test.txt"  //上传文件
-         Content-Type:
+         Content-Type: application/octet-stream
+         (空行)\r\n
          dfsfsd
-         ------WebKitFormBoundarynAeQKcYWF5Dz5XAt--
+         ----WebKitFormBoundarynAeQKcYWF5Dz5XAt--        //--{bound}--   end
          *
          *
          */
@@ -282,15 +284,37 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
                     String boundary = boundaryKv.split("=")[1];
 
-                    //String endBoundary = boundary + "--";
+                    String startBoundary = "--" + boundary;
+
+                    String endBoundary = "--" + boundary + "--";
+
 
                     List<String> lines = new LinkedList<>();
 
-                    String[] split = rs.split(LINE_SEPARATOR);
+                    String[] split = rs.split(HTTP_SEPARATOR);
 
                     lines.addAll(Arrays.asList(split));
 
                     int size = lines.size();
+
+                    //解析http body
+                    //1. 判断上传的是否是文件  即： Content-Disposition 中是否有 filename
+
+                    for (int i = 0; i < size;) {
+
+                        if (startBoundary.equals(lines.get(i))){
+
+
+
+
+                        }
+
+                    }
+
+
+
+
+
 
                     String name = "";
                     String value;
@@ -308,8 +332,8 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
                             String contentType = lines.get(i - 1);
                             if (isNotNull(contentType)) {
                                 contentType = contentType.split(":")[1].trim();
-                                RBHttpRequest.UploadFile file = new RBHttpRequest.UploadFile();
-                                file.setContent(value);
+
+
                             }
                             else {
                                 request.setParameter(name, value);
@@ -353,6 +377,28 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
             request.setJsonString(rs);
         }
+    }
+
+
+    /**
+     * Content-Disposition: form-data; name="file"; filename="test.txt"
+     *
+     * Content-Disposition: form-data; name="b"
+     *
+     * @param contentDisposition disposition
+     * @return filename
+     */
+    private String getFilenameIfAbsent(String contentDisposition){
+
+        Objects.requireNonNull(contentDisposition);
+
+        String filename = null;
+
+        if (contentDisposition.contains("filename")){
+            filename = contentDisposition.split("=")[2].replace("\"", "");
+        }
+
+        return filename;
     }
 
 

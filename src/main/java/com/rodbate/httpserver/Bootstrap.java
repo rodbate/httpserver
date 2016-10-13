@@ -132,6 +132,7 @@ public class Bootstrap {
 
         try {
 
+            //http://www.kammerl.de/ascii/AsciiSignature.php
             is = ClassLoader.getSystemResourceAsStream("logo.txt");
 
             br = new BufferedReader(new InputStreamReader(is));

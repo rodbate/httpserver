@@ -50,4 +50,7 @@ public class ServerConstants {
 
     public static final String ISO_8859_1 = "ISO8859-1";
 
+
+    public static final String HTTP_SEPARATOR = "\r\n";
+
 }

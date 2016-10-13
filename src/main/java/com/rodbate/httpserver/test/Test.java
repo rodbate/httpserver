@@ -2,6 +2,8 @@ package com.rodbate.httpserver.test;
 
 
 
+import com.rodbate.httpserver.upload.FileDeleteListener;
+
 import javax.activation.MimetypesFileTypeMap;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -19,7 +21,7 @@ public class Test {
 
     public static void main(String[] args) throws Exception {
 
-        CountDownLatch signal = new CountDownLatch(1000);
+        /*CountDownLatch signal = new CountDownLatch(1000);
 
         long start = System.currentTimeMillis();
 
@@ -90,6 +92,16 @@ public class Test {
 
         signal.await();
 
-        System.out.println("   complete use time  ===== " + (System.currentTimeMillis() - start) / 1000 + "s");
+        System.out.println("   complete use time  ===== " + (System.currentTimeMillis() - start) / 1000 + "s");*/
+
+        String property = System.getProperty("line.separator");
+        System.out.println(property);
+
+        FileDeleteListener.register(new File("D:\\test.txt"), 10);
+
+        //while (true)
+
+        Thread.currentThread().join();
+
     }
 }
