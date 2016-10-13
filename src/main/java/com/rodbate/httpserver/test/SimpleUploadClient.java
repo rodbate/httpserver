@@ -1,6 +1,7 @@
 package com.rodbate.httpserver.test;
 
 
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
@@ -47,16 +48,17 @@ public class SimpleUploadClient {
 
         conn.setDoInput(true);
         conn.setDoOutput(true);
+        conn.setUseCaches(false);
 
         String boundary = "--SimpleUploadClient";
 
         conn.addRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
         conn.addRequestProperty("Connection", "keep-alive");
-        //conn.addRequestProperty("Charset", "utf-8");
+        conn.addRequestProperty("Charset", "utf-8");
 
         conn.connect();
 
-        OutputStream out = conn.getOutputStream();
+        DataOutputStream out = new DataOutputStream(conn.getOutputStream());
 
         FileInputStream fis = new FileInputStream(new File("D:\\WorkSoftwares\\1.exe"));
 
@@ -80,11 +82,14 @@ public class SimpleUploadClient {
 
         out.write(SEPARATOR.getBytes());
         out.write(("--" + boundary + "--" + SEPARATOR).getBytes());
-
+        out.flush();
         out.close();
 
         fis.close();
 
+        int responseCode = conn.getResponseCode();
+
+        System.out.println(responseCode);
 
 
         //conn.disconnect();
