@@ -94,14 +94,20 @@ public class Test {
 
         System.out.println("   complete use time  ===== " + (System.currentTimeMillis() - start) / 1000 + "s");*/
 
-        String property = System.getProperty("line.separator");
+        String property = System.getProperty("java.io.tmpdir");
         System.out.println(property);
 
-        FileDeleteListener.register(new File("D:\\test.txt"), 10);
+        //FileDeleteListener.register(new File("D:\\test.txt"), 10);
 
         //while (true)
 
-        Thread.currentThread().join();
+        //Thread.currentThread().join();
+
+        File f = new File("C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\tmp_a4c57daa_ad98_4ec8_9407_e22de8243485_0000");
+
+        System.out.println(f.exists());
+
+        System.out.println(f.delete());
 
     }
 }

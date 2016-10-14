@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.cookie.DefaultCookie;
 
 import java.io.*;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 import static com.rodbate.httpserver.common.HeaderNameValue.*;
@@ -17,59 +18,31 @@ import static com.rodbate.httpserver.common.HeaderNameValue.*;
 @RequestMapping(value = "/api")
 public class RequestTest {
 
-
+    private static AtomicInteger COUNT = new AtomicInteger(1);
 
     @RequestMapping(value = "/hello", responseContentType = "text/html; charset=utf-8")
     public Object get(RBHttpRequest request, RBHttpResponse response){
 
-
-
-        /*Set<Cookie> cookie = request.getCookie();
-        Cookie requestc = cookie.iterator().next();
+        System.out.println("=============== invoke method times   " + COUNT.getAndIncrement());
         try {
 
-            Cookie c = new DefaultCookie("test", "test");
-            c.setPath("/");
-            c.setDomain("127.0.0.1");
-            c.setMaxAge(100000);
-            //c.setSecure(true);
-            Cookie c1 = new DefaultCookie("rodbate", "cookie");
-            c1.setPath("/");
-            c1.setDomain("127.0.0.1");
-            c1.setMaxAge(100000);
-            response.addCookie(c1);
-            response.addCookie(c);
-
-            System.out.println(" =============== cookie : === " + requestc.toString());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        Ret ret = new Ret(1, "ret");*/
+            InputStream is = request.getFileItem().getInputStream();
+            System.out.println("====== content body size  " + is.available());
 
 
-        /*File f = new File("D:\\temp\\CenOS.zip");
-        FileInputStream fis = null;
-        try {
-            fis = new FileInputStream(f);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        //InputStream
-        ByteArrayInputStream is = new ByteArrayInputStream("hhhhhhhhh".getBytes());
+            FileOutputStream out = new FileOutputStream("D:\\upload.txt");
 
-        response.setHeader(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
-
-        response.setFileName("CenOS.zip");*/
-
-        //response.sendRedirect("http://www.baidu.com");
-
-        for (int i = 0; i < 2; i++) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            byte[] b = new byte[1024];
+            int len;
+            while ((len = is.read(b)) != -1){
+                out.write(b, 0, len);
             }
+            is.close();
+            out.close();
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         return "success";

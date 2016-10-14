@@ -2,6 +2,7 @@ package com.rodbate.httpserver.http;
 
 
 import com.rodbate.httpserver.common.StringUtil;
+import com.rodbate.httpserver.upload.FileItem;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
@@ -12,6 +13,8 @@ import io.netty.handler.codec.http.multipart.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -28,6 +31,10 @@ import static com.rodbate.httpserver.common.HeaderNameValue.*;
 
 public class RBHttpRequest extends DefaultHttpRequest {
 
+
+
+
+    private FileItem fileItem;
 
 
     public RBHttpRequest(HttpVersion httpVersion, HttpMethod method, String uri) {
@@ -144,4 +151,13 @@ public class RBHttpRequest extends DefaultHttpRequest {
         return cookies;
     }
 
+
+
+    public FileItem getFileItem() {
+        return fileItem;
+    }
+
+    public void setFileItem(FileItem fileItem) {
+        this.fileItem = fileItem;
+    }
 }

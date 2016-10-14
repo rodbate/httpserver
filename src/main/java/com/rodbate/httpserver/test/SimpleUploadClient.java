@@ -5,10 +5,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
+import java.net.*;
 
 public class SimpleUploadClient {
 
@@ -60,19 +57,21 @@ public class SimpleUploadClient {
 
         DataOutputStream out = new DataOutputStream(conn.getOutputStream());
 
-        FileInputStream fis = new FileInputStream(new File("D:\\WorkSoftwares\\1.exe"));
+        FileInputStream fis = new FileInputStream(new File("D:\\完美世界.txt"));
 
         StringBuilder content = new StringBuilder();
 
+        String filename = URLEncoder.encode("完美世界.txt", "utf-8");
+
         content.append("--").append(boundary).append(SEPARATOR);
 
-        content.append("Content-Disposition: from/data; name=\"file\"; filename=\"1.exe\"").append(SEPARATOR);
+        content.append("Content-Disposition: from/data; name=\"file\"; filename=\"" + filename + "\"").append(SEPARATOR);
 
         content.append("Content-Type: application/octet-stream").append(SEPARATOR).append(SEPARATOR);
 
         out.write(content.toString().getBytes());
 
-        byte[] buffer = new byte[10240];
+        byte[] buffer = new byte[102400];
 
         int len;
 

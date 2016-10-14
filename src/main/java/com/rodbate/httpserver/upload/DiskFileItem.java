@@ -2,6 +2,7 @@ package com.rodbate.httpserver.upload;
 
 
 import com.rodbate.httpserver.common.IOUtils;
+import com.sun.corba.se.impl.orbutil.ObjectUtility;
 
 import java.io.*;
 import java.util.UUID;
@@ -56,7 +57,8 @@ public class DiskFileItem implements FileItem {
 
     @Override
     public InputStream getInputStream() throws IOException {
-        if (isInMemory()) {
+        if (!isInMemory()) {
+            outputStream.close();
             return new FileInputStream(outputStream.getFile());
         }
         if (cachedContent == null) {
@@ -180,6 +182,8 @@ public class DiskFileItem implements FileItem {
             String tmpFilename = String.format("tmp_%s_%s", UUID.randomUUID().toString().replace("-", "_"), getUniqueId());
 
             tempFile = new File(tmpDir, tmpFilename);
+
+            tempFile.deleteOnExit();
         }
 
 

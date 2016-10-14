@@ -4,9 +4,13 @@ package com.rodbate.httpserver.upload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static com.rodbate.httpserver.common.ServerConstants.*;
 
 
 public class FileDeleteListener {
@@ -15,6 +19,12 @@ public class FileDeleteListener {
 
     // 30 min
     private static final long DEFAULT_DURATION = 60 * 30;
+
+
+    private static final File DELETE_ON_START = new File(JAVA_IO_TMPDIR, "httpserver_tmp_delete");
+
+
+    private static final ReentrantLock LOCK = new ReentrantLock();
 
 
     private static final CopyOnWriteArraySet<Strategy> TODO_SET =
@@ -34,13 +44,17 @@ public class FileDeleteListener {
                 long current = System.currentTimeMillis() / 1000;
 
                 if (s.startTime + s.duration <= current) {
-
+                    if (!s.file.exists()) throw new RuntimeException("File not exists");
                     if (!s.file.delete()) {
+                        TODO_SET.remove(s);
                         FAILURE_SET.add(s);
                         LOGGER.info("=============  fail to delete file {} ", s.file.getPath());
                     } else {
                         TODO_SET.remove(s);
+
                         LOGGER.info("=============  delete file {} successfully", s.file.getPath());
+
+                        removeFilePath(s.file.getPath());
                     }
 
                 }
@@ -58,6 +72,49 @@ public class FileDeleteListener {
     };
 
 
+    private final static Runnable INIT_DELETE = () -> {
+
+
+        try {
+            if (DELETE_ON_START.exists()) {
+
+                BufferedReader reader =
+                        new BufferedReader(new InputStreamReader(new FileInputStream(DELETE_ON_START)));
+
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    if(new File(line).delete()){
+                        LOGGER.info("=============  delete file {} successfully", line);
+                    }
+                }
+
+                reader.close();
+
+                if (DELETE_ON_START.delete()) {
+                    LOGGER.info("=============  delete file {} successfully", DELETE_ON_START.getPath());
+                }
+            }
+
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    };
+
+
+    public static void init(){
+        Thread task = new Thread(INIT_DELETE);
+
+        task.setName("Daemon Thread Delete File");
+        task.setDaemon(true);
+        task.setPriority(Thread.NORM_PRIORITY);
+
+        task.start();
+    }
+
+
     static {
 
         Thread task = new Thread(DELETE_TASK);
@@ -70,20 +127,78 @@ public class FileDeleteListener {
     }
 
 
+    public static void removeFilePath(String filePath){
+
+        final ReentrantLock lock = LOCK;
+
+        try {
+            lock.lock();
+
+            if (DELETE_ON_START.exists()) {
+
+                BufferedReader reader =
+                        new BufferedReader(new InputStreamReader(new FileInputStream(DELETE_ON_START)));
+
+                String line;
+
+                List<String> paths = new ArrayList<>();
+
+                while ((line = reader.readLine()) != null) {
+                    if (!filePath.equals(line)) {
+                        paths.add(line);
+                    }
+                }
+
+                reader.close();
+
+                FileOutputStream fos = new FileOutputStream(DELETE_ON_START);
+
+                for (String s : paths) {
+
+                    fos.write((s + LINE_SEPARATOR).getBytes());
+                }
+
+                fos.close();
+
+            }
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+
+    }
+
 
     public static void register(File file, long duration) throws IOException {
 
-        if (!file.exists()) throw new IOException("File not exists");
+        final ReentrantLock lock = LOCK;
 
-        if (duration < 0) throw new IllegalArgumentException("Duration not negative");
+        try {
+            lock.lock();
 
-        if (duration == 0) {
-            duration = DEFAULT_DURATION;
+            if (duration < 0) throw new IllegalArgumentException("Duration not negative");
+
+            if (duration == 0) {
+                duration = DEFAULT_DURATION;
+            }
+
+            Strategy strategy = new Strategy(file, System.currentTimeMillis() / 1000, duration);
+
+            TODO_SET.add(strategy);
+
+            if (!DELETE_ON_START.exists()) {
+                DELETE_ON_START.createNewFile();
+            }
+
+            FileOutputStream fos = new FileOutputStream(DELETE_ON_START, true);
+            fos.write((file.getPath() + LINE_SEPARATOR).getBytes());
+            fos.close();
+        } finally {
+            lock.unlock();
         }
-
-        Strategy strategy = new Strategy(file, System.currentTimeMillis() / 1000, duration);
-
-        TODO_SET.add(strategy);
     }
 
 

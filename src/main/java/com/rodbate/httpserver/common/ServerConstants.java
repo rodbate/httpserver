@@ -48,6 +48,9 @@ public class ServerConstants {
     public static final String DEFAULT_DOWNLOAD_PATH = System.getProperty("user.home");
 
 
+    public static final String JAVA_IO_TMPDIR = System.getProperty("java.io.tmpdir");
+
+
     public static final String ISO_8859_1 = "ISO8859-1";
 
 

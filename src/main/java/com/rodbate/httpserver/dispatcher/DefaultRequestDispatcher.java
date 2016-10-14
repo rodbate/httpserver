@@ -7,6 +7,8 @@ import com.rodbate.httpserver.http.FileHandler;
 import com.rodbate.httpserver.http.RBHttpRequest;
 import com.rodbate.httpserver.http.RBHttpResponse;
 import com.rodbate.httpserver.http.RequestMethod;
+import com.rodbate.httpserver.upload.DiskFileItemFactory;
+import com.rodbate.httpserver.upload.FileItem;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -21,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,13 +48,19 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
     private HttpPostRequestDecoder decoder;
 
-    private static final HttpDataFactory FACTORY = new DefaultHttpDataFactory(DefaultHttpDataFactory.MINSIZE);
+    private static final int SIZE_THRESHOLD = 10240;
+
+    private static final long File_EXIST_DURATION = 10;
+
+    private final static DiskFileItemFactory factory = new DiskFileItemFactory(SIZE_THRESHOLD, null, File_EXIST_DURATION);
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultRequestDispatcher.class);
 
     private RBHttpRequest request;
 
     private RequestMeta meta;
+
+
 
     @Override
     protected void dispatch(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
@@ -194,12 +203,18 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
                 handlePostBody(msg);
 
-                dispatch0(ctx);
 
             } catch (Exception e) {
 
                 e.printStackTrace();
             }
+        }
+
+        if (msg instanceof LastHttpContent) {
+
+            LOG.info(" =========== last http content : " + ((LastHttpContent) msg).content().toString());
+            dispatch0(ctx);
+
         }
 
 
@@ -220,17 +235,20 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
         String rs = byteBuf.toString(DEFAULT_CHARSET);
 
-        rs = URLDecoder.decode(rs, "UTF-8");
 
         String requestContentType = request.getHeaderByName(CONTENT_TYPE);
 
-        LOG.info("================= request content type ======= {}", requestContentType);
+        //LOG.info("================= request content type ======= {}", requestContentType);
+
+        //LOG.info("================= post body length ======= {}", byteBuf.readableBytes());
+
+        //LOG.info("================= post body ======= {}", rs);
 
         //a=12345&b=1111  Content-Type = application/x-www-form-urlencoded
         if (X_WWW_FORM_URLENCODED.equals(requestContentType)){
 
 
-            LOG.info("================= post body ======= {}", rs);
+
             if (rs.contains("&")) {
 
                 String[] split = rs.split("&");
@@ -270,7 +288,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
         if (isNotNull(requestContentType) && requestContentType.startsWith(MULTIPART_FORM_DATA)){
 
 
-            LOG.info("================= post body ======= {}", rs);
+            /*LOG.info("================= post body ======= {}", rs);
 
             //去除空格
             requestContentType = removeBlankSpace(requestContentType);
@@ -289,72 +307,106 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
                     String endBoundary = "--" + boundary + "--";
 
 
-                    List<String> lines = new LinkedList<>();
 
-                    String[] split = rs.split(HTTP_SEPARATOR);
+                    for (int i = 0; i < rs.length();) {
 
-                    lines.addAll(Arrays.asList(split));
+                        //1, 判断起始位置  ----WebKitFormBoundarynAeQKcYWF5Dz5XAt\r\n
+                        String startLine = rs.substring(i, startBoundary.length() + 1);
 
-                    int size = lines.size();
+                        if (startBoundary.equals(startLine)){
 
-                    //解析http body
-                    //1. 判断上传的是否是文件  即： Content-Disposition 中是否有 filename
+                            //越过此行
+                            i += startBoundary.length() + 2;
 
-                    for (int i = 0; i < size;) {
+                            //2, 判断 Content-Disposition 取出此行
+                            StringBuilder disposition = new StringBuilder();
 
-                        if (startBoundary.equals(lines.get(i))){
+                            while (true) {
 
-
-
-
-                        }
-
-                    }
-
-
-
-
-
-
-                    String name = "";
-                    String value;
-
-                    for (int i = 0; i < size; i++) {
-
-                        //处理name
-                        if (i % 4 == 1){
-                            name = lines.get(i).split(";")[1].split("=")[1].replace("\"","");
-                        }
-
-                        //处理value
-                        if (i % 4 == 3){
-                            value = lines.get(i);
-                            String contentType = lines.get(i - 1);
-                            if (isNotNull(contentType)) {
-                                contentType = contentType.split(":")[1].trim();
-
-
+                                if (rs.charAt(i) == '\r' && rs.charAt(i+1) == '\n'){
+                                    //此行结尾
+                                    i += 2;
+                                    //disposition.append("\r\n");
+                                    break;
+                                }
+                                disposition.append(rs.charAt(i++));
                             }
+                            *//**
+                             * Content-Disposition: form-data; name="file"; filename="test.txt"
+                             *
+                             * Content-Disposition: form-data; name="a"
+                             *//*
+
+
+                            //上传文件类型
+                            if (disposition.toString().contains("filename")){
+                                String filename =
+                                        disposition.toString().split(";")[2].split("=")[1].replace("\"", "");
+
+                                request.setFileFlag(2);
+                            }
+
+                            //普通的参数类型
                             else {
-                                request.setParameter(name, value);
+
+                                String name = disposition.toString().split(";")[1].split("=")[1].replace("\"", "");
+
+                                request.setFileFlag(1);
                             }
+
+                            //去除空行 \r\n
+                            i += 2;
+
                         }
-
-
                     }
-
                 }
 
+            }*/
+
+            /*InputStream in = new ByteArrayInputStream(byteBuf.toString(Charset.forName("utf-8")).getBytes());
+
+            if (request.getInputStream() != null){
+
+            }
+            request.setInputStream(in);
+
+            InputStream inputStream = request.getInputStream();
+
+            if (inputStream == null){
+                inputStream = new ByteArrayInputStream(byteBuf.toString(Charset.forName("utf-8")).getBytes());
+            } else {
+
+            }*/
+
+
+            //转化为DiskFile
+            FileItem fileItem = request.getFileItem();
+
+            if (fileItem == null) {
+                fileItem = factory.createItem(null, null, "upload", false);
+            }
+
+
+            try {
+                OutputStream outputStream = fileItem.getOutputStream();
+
+                outputStream.write(byteBuf.toString(Charset.forName(ISO_8859_1)).getBytes(ISO_8859_1));
+
+                request.setFileItem(fileItem);
+
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
         }
+
 
 
         //text/plain; charset=UTF-8
 
         if (isNotNull(requestContentType) && requestContentType.startsWith(TEXT_PLAIN)) {
 
-            LOG.info("================= post body ======= {}", rs);
+            //LOG.info("================= post body ======= {}", rs);
             if (rs.contains("&")) {
 
                 String[] split = rs.split("&");
@@ -418,6 +470,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
         if (HttpUtil.isKeepAlive(request)) {
             response.setHeader(CONNECTION, KEEP_ALIVE);
         }
+
 
         //判断Content-Type : application/octet-stream
         if (APPLICATION_OCTET_STREAM.equalsIgnoreCase(response.headers().get(CONTENT_TYPE))){

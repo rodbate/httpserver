@@ -1,6 +1,7 @@
 package com.rodbate.httpserver;
 
 import com.rodbate.httpserver.common.RequestMappers;
+import com.rodbate.httpserver.upload.FileDeleteListener;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
@@ -75,6 +76,8 @@ public class Bootstrap {
             printLogo();
 
             RequestMappers.init();
+
+            FileDeleteListener.init();
 
             LOGGER.info("========>>>>>>>> Http Server Start Up ! Using Time [{}MS]", System.currentTimeMillis() - start);
             LOGGER.info("========>>>>>>>> Open your web browser and navigate to http://{}:{}", isNull(hostname) ? "127.0.0.1" : hostname, port);

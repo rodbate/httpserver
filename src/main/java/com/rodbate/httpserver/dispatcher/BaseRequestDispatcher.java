@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -20,6 +21,8 @@ import java.net.InetSocketAddress;
 public abstract class BaseRequestDispatcher extends AbstractRequestDispatcher{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseRequestDispatcher.class);
+
+    private AtomicInteger C = new AtomicInteger(1);
 
     @Override
     public void init() {
@@ -37,6 +40,7 @@ public abstract class BaseRequestDispatcher extends AbstractRequestDispatcher{
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
 
+        LOGGER.info("====== " + getClass() + "   invoke method channelRead0 count  : " + C.getAndIncrement());
         dispatch(ctx, msg);
 
     }
