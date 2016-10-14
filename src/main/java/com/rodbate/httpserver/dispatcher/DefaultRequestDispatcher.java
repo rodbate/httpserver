@@ -11,7 +11,6 @@ import com.rodbate.httpserver.upload.DiskFileItemFactory;
 import com.rodbate.httpserver.upload.FileItem;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
@@ -24,8 +23,6 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -233,16 +230,11 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
         ByteBuf byteBuf = content.content();
 
-        String rs = byteBuf.toString(DEFAULT_CHARSET);
+        String rs = byteBuf.toString(Charset.forName(ISO_8859_1));
 
 
         String requestContentType = request.getHeaderByName(CONTENT_TYPE);
 
-        //LOG.info("================= request content type ======= {}", requestContentType);
-
-        //LOG.info("================= post body length ======= {}", byteBuf.readableBytes());
-
-        //LOG.info("================= post body ======= {}", rs);
 
         //a=12345&b=1111  Content-Type = application/x-www-form-urlencoded
         if (X_WWW_FORM_URLENCODED.equals(requestContentType)){
@@ -288,97 +280,6 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
         if (isNotNull(requestContentType) && requestContentType.startsWith(MULTIPART_FORM_DATA)){
 
 
-            /*LOG.info("================= post body ======= {}", rs);
-
-            //去除空格
-            requestContentType = removeBlankSpace(requestContentType);
-
-            if (requestContentType.contains(";")) {
-
-                //获取boundary
-                String boundaryKv = requestContentType.split(";")[1];
-
-                if (boundaryKv.contains("boundary")) {
-
-                    String boundary = boundaryKv.split("=")[1];
-
-                    String startBoundary = "--" + boundary;
-
-                    String endBoundary = "--" + boundary + "--";
-
-
-
-                    for (int i = 0; i < rs.length();) {
-
-                        //1, 判断起始位置  ----WebKitFormBoundarynAeQKcYWF5Dz5XAt\r\n
-                        String startLine = rs.substring(i, startBoundary.length() + 1);
-
-                        if (startBoundary.equals(startLine)){
-
-                            //越过此行
-                            i += startBoundary.length() + 2;
-
-                            //2, 判断 Content-Disposition 取出此行
-                            StringBuilder disposition = new StringBuilder();
-
-                            while (true) {
-
-                                if (rs.charAt(i) == '\r' && rs.charAt(i+1) == '\n'){
-                                    //此行结尾
-                                    i += 2;
-                                    //disposition.append("\r\n");
-                                    break;
-                                }
-                                disposition.append(rs.charAt(i++));
-                            }
-                            *//**
-                             * Content-Disposition: form-data; name="file"; filename="test.txt"
-                             *
-                             * Content-Disposition: form-data; name="a"
-                             *//*
-
-
-                            //上传文件类型
-                            if (disposition.toString().contains("filename")){
-                                String filename =
-                                        disposition.toString().split(";")[2].split("=")[1].replace("\"", "");
-
-                                request.setFileFlag(2);
-                            }
-
-                            //普通的参数类型
-                            else {
-
-                                String name = disposition.toString().split(";")[1].split("=")[1].replace("\"", "");
-
-                                request.setFileFlag(1);
-                            }
-
-                            //去除空行 \r\n
-                            i += 2;
-
-                        }
-                    }
-                }
-
-            }*/
-
-            /*InputStream in = new ByteArrayInputStream(byteBuf.toString(Charset.forName("utf-8")).getBytes());
-
-            if (request.getInputStream() != null){
-
-            }
-            request.setInputStream(in);
-
-            InputStream inputStream = request.getInputStream();
-
-            if (inputStream == null){
-                inputStream = new ByteArrayInputStream(byteBuf.toString(Charset.forName("utf-8")).getBytes());
-            } else {
-
-            }*/
-
-
             //转化为DiskFile
             FileItem fileItem = request.getFileItem();
 
@@ -390,7 +291,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
             try {
                 OutputStream outputStream = fileItem.getOutputStream();
 
-                outputStream.write(byteBuf.toString(Charset.forName(ISO_8859_1)).getBytes(ISO_8859_1));
+                outputStream.write(rs.getBytes(ISO_8859_1));
 
                 request.setFileItem(fileItem);
 

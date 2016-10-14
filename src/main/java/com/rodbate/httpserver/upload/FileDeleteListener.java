@@ -107,7 +107,7 @@ public class FileDeleteListener {
     public static void init(){
         Thread task = new Thread(INIT_DELETE);
 
-        task.setName("Daemon Thread Delete File");
+        task.setName("Daemon Thread-1 Delete File");
         task.setDaemon(true);
         task.setPriority(Thread.NORM_PRIORITY);
 
@@ -119,7 +119,7 @@ public class FileDeleteListener {
 
         Thread task = new Thread(DELETE_TASK);
 
-        task.setName("Daemon Thread Delete File");
+        task.setName("Daemon Thread-2 Delete File");
         task.setDaemon(true);
         task.setPriority(Thread.NORM_PRIORITY);
 

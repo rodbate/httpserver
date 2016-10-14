@@ -1,7 +1,6 @@
 package com.rodbate.httpserver.common;
 
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
