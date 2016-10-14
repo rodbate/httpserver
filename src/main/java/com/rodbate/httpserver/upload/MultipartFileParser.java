@@ -42,20 +42,20 @@ public class MultipartFileParser {
     /**
      *Content-Type = multipart/form-data; boundary=--WebKitFormBoundarynAeQKcYWF5Dz5XAt
      *
-     ----WebKitFormBoundarynAeQKcYWF5Dz5XAt     0     //--{bound}   start
-     Content-Disposition: form-data; name="a"   1
+     ----WebKitFormBoundarynAeQKcYWF5Dz5XAt\r\n     0     //--{bound}   start
+     Content-Disposition: form-data; name="a"\r\n   1
      (空行)\r\n                                  2
-     1111                                       3
-     ----WebKitFormBoundarynAeQKcYWF5Dz5XAt     4
-     Content-Disposition: form-data; name="b"   5
+     1111\r\n                                       3
+     ----WebKitFormBoundarynAeQKcYWF5Dz5XAt\r\n     4
+     Content-Disposition: form-data; name="b"\r\n   5
      (空行) \r\n                                 6
-     dfsfsd                                     7
-     ----WebKitFormBoundarynAeQKcYWF5Dz5XAt
-     Content-Disposition: form-data; name="file"; filename="test.txt"  //上传文件
-     Content-Type: application/octet-stream
+     dfsfsd\r\n                                     7
+     ----WebKitFormBoundarynAeQKcYWF5Dz5XAt\r\n
+     Content-Disposition: form-data; name="file"; filename="test.txt"\r\n  //上传文件
+     Content-Type: application/octet-stream\r\n
      (空行)\r\n
-     dfsfsd
-     ----WebKitFormBoundarynAeQKcYWF5Dz5XAt--        //--{bound}--   end
+     dfsfsd\r\n
+     ----WebKitFormBoundarynAeQKcYWF5Dz5XAt--\r\n        //--{bound}--   end
      *
      *
      */
