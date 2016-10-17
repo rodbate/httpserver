@@ -3,10 +3,10 @@ package com.rodbate.httpserver.upload;
 
 import com.rodbate.httpserver.http.RBHttpRequest;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.URLDecoder;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +17,7 @@ import static com.rodbate.httpserver.common.ServerConstants.*;
 import static com.rodbate.httpserver.common.StringUtil.*;
 import static com.rodbate.httpserver.common.HeaderNameValue.*;
 import static com.rodbate.httpserver.common.ServerConfig.*;
+
 
 
 /**
@@ -58,6 +59,9 @@ public class MultipartFileParser {
      ----WebKitFormBoundarynAeQKcYWF5Dz5XAt--\r\n        //--{bound}--   end
      *
      *
+     *
+     * @param request request
+     * @return list
      */
     public List<FileItem> parse(RBHttpRequest request){
 
@@ -91,64 +95,301 @@ public class MultipartFileParser {
                         if (inputStream instanceof ByteArrayInputStream) {
 
                             ByteArrayInputStream bais = (ByteArrayInputStream) inputStream;
-                        }
 
-                        if (inputStream instanceof FileInputStream) {
-                            FileInputStream fis = (FileInputStream) inputStream;
+                            byte b[] = new byte[bais.available()];
 
-                        }
+                            bais.read(b);
 
+                            bais.close();
 
-                        /*for (int i = 0; i < rs.length();) {
+                            String content = new String(b);
 
-                            //1, 判断起始位置  ----WebKitFormBoundarynAeQKcYWF5Dz5XAt\r\n
-                            String startLine = rs.substring(i, startBoundary.length() + 1);
+                            //结束标记
+                            int flag = 0;
 
-                            if (startBoundary.equals(startLine)){
+                            for (int i = 0; i < content.length();) {
 
-                                //越过此行
+                                if (flag == 1) {
+                                    break;
+                                }
+
+                                //----WebKitFormBoundarynAeQKcYWF5Dz5XAt\r\n  越过此行
                                 i += startBoundary.length() + 2;
 
-                                //2, 判断 Content-Disposition 取出此行
+                                //Content-Disposition: form-data; name="a"\r\n
                                 StringBuilder disposition = new StringBuilder();
-
                                 while (true) {
 
-                                    if (rs.charAt(i) == '\r' && rs.charAt(i+1) == '\n'){
-                                        //此行结尾
+                                    disposition.append(content.charAt(i++));
+
+                                    if (content.charAt(i) == '\r' && content.charAt(i+1) == '\n'){
+
                                         i += 2;
-                                        //disposition.append("\r\n");
                                         break;
                                     }
-                                    disposition.append(rs.charAt(i++));
-                                }
-                                *//**
-                                * Content-Disposition: form-data; name="file"; filename="test.txt"
-                                * Content-Disposition: form-data; name="a"
-                                *//*
-
-
-                                //上传文件类型
-                                if (disposition.toString().contains("filename")){
-                                    String filename =
-                                            disposition.toString().split(";")[2].split("=")[1].replace("\"", "");
-
-                                    request.setFileFlag(2);
                                 }
 
-                                //普通的参数类型
-                                else {
+                                String dis = disposition.toString();
 
-                                    String name = disposition.toString().split(";")[1].split("=")[1].replace("\"", "");
+                                if (dis.contains("file")){
 
-                                    request.setFileFlag(1);
+                                    String filename = dis.split(";")[2].split("=")[1].replace("\"", "");
+
+                                    filename = URLDecoder.decode(filename, "utf-8");
+
+                                    //获取content-type
+                                    StringBuilder contentTypeSb = new StringBuilder();
+                                    while (true) {
+
+                                        contentTypeSb.append(content.charAt(i++));
+
+                                        if (content.charAt(i) == '\r' && content.charAt(i+1) == '\n'){
+
+                                            i += 2;
+                                            break;
+                                        }
+                                    }
+
+                                    String contentType = contentTypeSb.toString().split(":")[1].trim();
+
+                                    //越过空行 \r\n
+                                    i += 2;
+
+                                    StringBuilder value = new StringBuilder();
+
+                                    while (true) {
+
+                                        value.append(content.charAt(i++));
+
+                                        //下一个参数起始位置
+                                        if (content.charAt(i) == '-' && content.charAt(i+1) == '-' &&
+                                                content.substring(i, startBoundary.length() + 1).equals(startBoundary)) {
+
+                                            String v = value.substring(0, value.length() - 1);
+
+                                            FileItem item = factory.createItem("file", contentType, filename, false);
+                                            OutputStream out = item.getOutputStream();
+
+                                            out.write(v.getBytes());
+                                            out.close();
+                                            fileItems.add(item);
+                                            break;
+                                        }
+
+                                        //结束
+                                        if (content.charAt(i) == '-' && content.charAt(i+1) == '-' &&
+                                                content.substring(i, endBoundary.length() + 1).equals(endBoundary)) {
+
+                                            String v = value.substring(0, value.length() - 1);
+
+                                            FileItem item = factory.createItem("file", contentType, filename, false);
+                                            OutputStream out = item.getOutputStream();
+
+                                            out.write(v.getBytes());
+                                            out.close();
+                                            fileItems.add(item);
+                                            flag = 1;
+                                            break;
+                                        }
+                                    }
+
+                                } else {
+                                    String name = dis.split(";")[1].split("=")[1].replace("\"", "");
+                                    //越过空行 \r\n
+                                    i += 2;
+
+                                    StringBuilder value = new StringBuilder();
+
+                                    while (true) {
+
+                                        value.append(content.charAt(i++));
+
+                                        //下一个参数起始位置
+                                        if (content.charAt(i) == '-' && content.charAt(i+1) == '-' &&
+                                                content.substring(i, startBoundary.length() + 1).equals(startBoundary)) {
+
+                                            String v = value.substring(0, value.length() - 1);
+
+                                            FileItem item = factory.createItem(name, null, null, true);
+                                            OutputStream out = item.getOutputStream();
+
+                                            out.write(v.getBytes());
+                                            out.close();
+                                            fileItems.add(item);
+                                            break;
+                                        }
+
+                                        //结束
+                                        if (content.charAt(i) == '-' && content.charAt(i+1) == '-' &&
+                                                content.substring(i, endBoundary.length() + 1).equals(endBoundary)) {
+
+                                            String v = value.substring(0, value.length() - 1);
+
+                                            FileItem item = factory.createItem(name, null, null, true);
+                                            OutputStream out = item.getOutputStream();
+
+                                            out.write(v.getBytes());
+                                            out.close();
+                                            fileItems.add(item);
+                                            flag = 1;
+                                            break;
+                                        }
+                                    }
                                 }
 
-                                //去除空行 \r\n
-                                i += 2;
 
                             }
-                        }*/
+                        }
+
+
+                        if (inputStream instanceof FileInputStream) {
+
+                            FileInputStream fis = (FileInputStream) inputStream;
+
+                            int length = fis.available();
+
+
+                            FileChannel channel = fis.getChannel();
+
+                            ByteBuffer buffer = ByteBuffer.allocate(1024);
+
+                            ByteBuffer startBoundaryBuffer = ByteBuffer.allocate(startBoundary.length());
+
+                            ByteBuffer endBoundaryBuffer = ByteBuffer.allocate(endBoundary.length());
+
+                            ByteBuffer one = ByteBuffer.allocate(1);
+
+                            long currentPosition = 0;
+
+                            /**
+                             *
+                               ----WebKitFormBoundarynAeQKcYWF5Dz5XAt\r\n
+                               Content-Disposition: form-data; name="file"; filename="test.txt"\r\n
+                               Content-Type: application/octet-stream\r\n
+                               (空行)\r\n
+                               dfsfsd\r\n
+                             *
+                             */
+
+                            loop1:
+                                while (true) {
+
+                                    //buffer.clear();
+
+                                    //----WebKitFormBoundarynAeQKcYWF5Dz5XAt\r\n  越过此行
+                                    channel.position(currentPosition += (startBoundary.length() + 2));
+
+                                    //Content-Disposition: form-data; name="file"; filename="test.txt"\r\n
+                                    channel.read(buffer);
+
+                                    buffer.flip();
+
+                                    //指针回退1024
+                                    currentPosition = channel.position();
+                                    currentPosition -= 1024;
+
+                                    StringBuilder dispositionSb = new StringBuilder();
+                                    for (;;) {
+
+                                        byte b1 = buffer.get();
+                                        ++currentPosition;
+                                        if (b1 == '\r' && buffer.get() == '\n') {
+                                            ++currentPosition;
+                                            break;
+                                        }
+                                        dispositionSb.append((char)b1);
+                                    }
+
+                                    String disposition = dispositionSb.toString();
+
+                                    if (disposition.contains("file")) {
+
+                                        //file
+                                        String filename = disposition.split(";")[2].split("=")[1].replace("\"", "");
+
+                                        filename = URLDecoder.decode(filename, "utf-8");
+
+                                        //Content-Type: application/octet-stream\r\n
+                                        StringBuilder contentTypeSb = new StringBuilder();
+                                        for (;;) {
+
+                                            byte b1 = buffer.get();
+                                            ++currentPosition;
+                                            if (b1 == '\r' && buffer.get() == '\n') {
+                                                ++currentPosition;
+                                                break;
+                                            }
+                                            contentTypeSb.append((char)b1);
+                                        }
+
+                                        String contentTypeStr = contentTypeSb.toString();
+
+                                        String contentType = contentTypeStr.split(":")[1].trim();
+
+                                        // \r\n 越过此行
+                                        //buffer.get();
+                                        //buffer.get();
+
+                                        currentPosition += 2;
+
+                                        FileItem item = factory.createItem("file", contentType, filename, false);
+                                        OutputStream outputStream = item.getOutputStream();
+
+                                        //设置position
+                                        channel.position(currentPosition);
+                                        fileItems.add(item);
+
+
+                                        for(;;){
+
+                                            channel.read(one);
+
+                                            channel.read(endBoundaryBuffer);
+                                            currentPosition = channel.position();
+                                            currentPosition -= endBoundary.length();
+                                            channel.position(currentPosition);
+
+                                            if (new String(endBoundaryBuffer.array()).equals(endBoundary)) {
+                                                endBoundaryBuffer.clear();
+                                                break loop1;
+                                            }
+
+                                            endBoundaryBuffer.clear();
+
+                                            channel.read(startBoundaryBuffer);
+                                            currentPosition = channel.position();
+                                            currentPosition -= startBoundary.length();
+                                            channel.position(currentPosition);
+
+
+
+                                            if (new String(startBoundaryBuffer.array()).equals(startBoundary)) {
+                                                startBoundaryBuffer.clear();
+                                                buffer.clear();
+                                                break;
+                                            }
+
+                                            startBoundaryBuffer.clear();
+
+                                            outputStream.write(one.array());
+
+                                            one.clear();
+                                        }
+                                        System.out.println();
+
+
+                                    } else {
+
+                                        //form field
+                                        String name = disposition.split(";")[1].split("=")[1].replace("\"", "");
+                                    }
+
+                                }
+
+                        }
+
+
+
 
                     }
                 } catch (IOException e) {

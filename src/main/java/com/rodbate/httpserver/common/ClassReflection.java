@@ -170,15 +170,4 @@ public class ClassReflection {
         return methods;
     }
 
-    public static void main(String[] args) throws IOException {
-
-        Set<Class<?>> set = getClassesFromPackage(null, "");
-
-        for (Class<?> c : set) {
-
-            System.out.println(c.getName());
-        }
-
-
-    }
 }

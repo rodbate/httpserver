@@ -495,26 +495,26 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
             resp = method.invoke(instance, request, response);
 
         } catch (Exception e) {
-            //e.printStackTrace();
+
             try {
                 if (e instanceof IllegalArgumentException) {
                     resp = method.invoke(instance, request);
                 }
             } catch (Exception e1) {
-                //e1.printStackTrace();
+
                 try {
                     if (e1 instanceof IllegalArgumentException) {
                         resp = method.invoke(instance, response);
                     }
                 } catch (Exception e2) {
-                    //e2.printStackTrace();
+
                     try {
                         if (e2 instanceof IllegalArgumentException) {
                             resp = method.invoke(instance);
                         }
                     } catch (Exception e3) {
                         //ignore
-                        //e3.printStackTrace();
+
                     }
                 }
             }

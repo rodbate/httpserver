@@ -44,7 +44,10 @@ public class FileDeleteListener {
                 long current = System.currentTimeMillis() / 1000;
 
                 if (s.startTime + s.duration <= current) {
-                    if (!s.file.exists()) throw new RuntimeException("File not exists");
+                    if (!s.file.exists()) {
+                        TODO_SET.remove(s);
+                        throw new RuntimeException("File not exists");
+                    }
                     if (!s.file.delete()) {
                         TODO_SET.remove(s);
                         FAILURE_SET.add(s);

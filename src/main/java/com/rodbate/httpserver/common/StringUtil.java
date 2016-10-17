@@ -50,9 +50,4 @@ public class StringUtil {
     }
 
 
-    public static void main(String[] args) {
-
-        System.out.println(removeBlankSpace("Content-Type = multipart/form-data; boundary=----WebKitFormBoundaryGzGFIXxIloOfAyym"));
-
-    }
 }
