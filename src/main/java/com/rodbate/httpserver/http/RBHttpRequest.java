@@ -135,7 +135,7 @@ public class RBHttpRequest extends DefaultHttpRequest {
     /**
      * 获取cookie
      *
-     * @return Set<Cookie>
+     * @return Cookies
      */
     public Set<Cookie> getCookie(){
         Set<Cookie> cookies;

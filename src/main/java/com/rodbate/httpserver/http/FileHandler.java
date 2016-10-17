@@ -58,6 +58,11 @@ public class FileHandler {
      * HTTP/1.1 304 Not Modified
      * Date:               Tue, 01 Mar 2011 22:44:28 GMT
      *
+     *
+     * @param ctx ctx
+     * @param request request
+     * @param filePath filepath
+     * @return boolean
      */
 
     public static boolean download(ChannelHandlerContext ctx, RBHttpRequest request, String filePath){
