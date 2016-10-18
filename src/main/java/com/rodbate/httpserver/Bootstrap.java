@@ -20,6 +20,7 @@ import java.net.ServerSocket;
 import static com.rodbate.httpserver.common.StringUtil.*;
 import static com.rodbate.httpserver.common.ServerConfig.*;
 import static com.rodbate.httpserver.Version.*;
+import static com.rodbate.httpserver.common.ServerConstants.*;
 
 /**
  *
@@ -35,11 +36,6 @@ public class Bootstrap {
 
         long start = System.currentTimeMillis();
 
-        //boss 线程
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-
-        //工作线程
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
 
         initProperties();
 
@@ -50,6 +46,20 @@ public class Bootstrap {
         int port = Integer.valueOf(portStr);
 
         String hostname = getProperty("hostname");
+
+        String bossThread = getProperty("bossThreadCount");
+
+        String workerThread = getProperty("workerThreadCount");
+
+        int bossThreadCount = isNull(bossThread) ? 1 : Integer.valueOf(bossThread);
+        int workerThreadCount = isNull(workerThread) ? PROCESSORS * 2 : Integer.valueOf(workerThread);
+
+        //boss 线程
+        EventLoopGroup bossGroup = new NioEventLoopGroup(bossThreadCount);
+
+        //工作线程
+        EventLoopGroup workerGroup = new NioEventLoopGroup(workerThreadCount);
+
 
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();

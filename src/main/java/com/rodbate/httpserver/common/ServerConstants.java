@@ -55,4 +55,6 @@ public class ServerConstants {
 
     public static final String HTTP_SEPARATOR = "\r\n";
 
+    public static final int PROCESSORS = Runtime.getRuntime().availableProcessors();
+
 }
