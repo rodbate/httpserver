@@ -289,7 +289,7 @@ public class SimpleDownloadClient {
 
                     int j = i;
                     File temp = files[i];
-                    while (j > 0 && getIndex(files[j]) < getIndex(files[j - 1])){
+                    while (j > 0 && getIndex(files[j - 1]) > getIndex(temp)){
 
                         files[j] = files[j - 1];
                         j--;
