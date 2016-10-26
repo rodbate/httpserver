@@ -207,7 +207,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
             }
         }
 
-        if (msg instanceof LastHttpContent) {
+        if (request.method() != HttpMethod.GET && msg instanceof LastHttpContent) {
 
             LOG.info(" =========== last http content : " + ((LastHttpContent) msg).content().toString());
             dispatch0(ctx);
