@@ -1,4 +1,4 @@
-package com.rodbate.httpserver.nioserver;
+package com.rodbate.httpserver.nioserver.old;
 
 
 import java.nio.ByteBuffer;
@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 public interface ReaderChannel {
 
 
-    void init();
+    //void init();
 
 
     void fireRead(ByteBuffer buffer);

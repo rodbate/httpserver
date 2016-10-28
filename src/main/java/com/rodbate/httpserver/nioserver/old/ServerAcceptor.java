@@ -1,4 +1,4 @@
-package com.rodbate.httpserver.nioserver;
+package com.rodbate.httpserver.nioserver.old;
 
 
 import org.slf4j.Logger;
@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
 
 
 public class ServerAcceptor implements Runnable {
@@ -23,9 +22,13 @@ public class ServerAcceptor implements Runnable {
     private final Queue<Socket> acceptQueue;
 
 
-    public ServerAcceptor(ServerSocketChannel serverSocketChannel, Queue<Socket> acceptQueue) {
+    private ReaderChannel readerChannel;
+
+
+    public ServerAcceptor(ServerSocketChannel serverSocketChannel, Queue<Socket> acceptQueue, ReaderChannel readerChannel) {
         this.serverSocketChannel = serverSocketChannel;
         this.acceptQueue = acceptQueue;
+        this.readerChannel =readerChannel;
     }
 
     @Override
@@ -45,7 +48,7 @@ public class ServerAcceptor implements Runnable {
 
                 LOGGER.info("=======  >>>>  accept socket channel [{}]", socketChannel);
 
-                acceptQueue.offer(new Socket(socketChannel));
+                acceptQueue.offer(new Socket(socketChannel, readerChannel));
 
             } catch (IOException e) {
                 e.printStackTrace();

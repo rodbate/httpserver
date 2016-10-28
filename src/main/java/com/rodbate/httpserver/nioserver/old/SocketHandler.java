@@ -1,4 +1,4 @@
-package com.rodbate.httpserver.nioserver;
+package com.rodbate.httpserver.nioserver.old;
 
 
 import java.io.IOException;
@@ -45,7 +45,11 @@ public class SocketHandler implements Runnable {
 
         for (;;){
 
-
+            try {
+                execute();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
         }
 
@@ -73,6 +77,7 @@ public class SocketHandler implements Runnable {
 
         while ((socket = acceptQueue.poll()) != null) {
 
+            //System.out.println("====== accept socket :" + socket);
             socket.configureBlocking(false);
 
             socket.register(readSelector, OP_READ, socket);
@@ -94,20 +99,16 @@ public class SocketHandler implements Runnable {
 
                 SelectionKey key = it.next();
 
-                if (key.isValid()){
+                it.remove();
+
+                if (key.isValid() && key.isReadable()){
 
                     Socket socket = (Socket) key.attachment();
 
 
-
-                    //socket.read(null);
-                    // TODO: 2016/10/26 0026 while read
-
-                    int length = 0;
-
                     readBuffer.clear();
 
-                    while ((length = socket.read(readBuffer)) != -1){
+                    while (socket.read(readBuffer) > 0){
 
                         readBuffer.flip();
 
@@ -119,8 +120,9 @@ public class SocketHandler implements Runnable {
                 }
 
 
-                it.remove();
             }
+
+
 
         }
 

@@ -1,4 +1,4 @@
-package com.rodbate.httpserver.nioserver;
+package com.rodbate.httpserver.nioserver.old;
 
 
 import java.io.IOException;
@@ -21,9 +21,10 @@ public class Socket {
     private static final AtomicInteger COUNT = new AtomicInteger(1);
 
 
-    public Socket(SocketChannel socketChannel) {
+    public Socket(SocketChannel socketChannel, ReaderChannel readerChannel) {
         this.socketId = getUniqueId();
         this.socketChannel = socketChannel;
+        this.readerChannel = readerChannel;
     }
 
 
