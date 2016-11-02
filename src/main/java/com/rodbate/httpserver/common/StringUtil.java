@@ -12,31 +12,36 @@ public class StringUtil {
 
 
 
+
+
     /**
      * 去除空格
      *
-     * @param src str
+     * @param str str
      * @return str
      */
-    public static String removeBlankSpace(String src){
+    public static String removeBlankSpace(String str){
 
-        Objects.requireNonNull(src);
+        Objects.requireNonNull(str);
 
-        src = src.trim();
+        char[] array = str.toCharArray();
 
-        StringBuilder sb = new StringBuilder();
+        int p1 = 0;
 
-        for (int i = 0; i < src.length(); i++) {
+        int p2 = 0;
 
-            char c = src.charAt(i);
+        while(p2 < array.length){
 
-            if (c != ' ') {
-                sb.append(c);
+            array[p1] = array[p2++];
+
+            if (array[p1] != ' '){
+                p1++;
             }
         }
 
-        return sb.toString();
+        return new String(array, 0, p1);
     }
+
 
 
 
