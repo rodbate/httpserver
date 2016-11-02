@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
@@ -180,7 +181,11 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
                         if (request.method() == HttpMethod.GET) {
 
-                            dispatch0(ctx);
+                            try {
+                                dispatch0(ctx);
+                            } catch (Throwable throwable) {
+                                throwable.printStackTrace();
+                            }
 
                         }
                     } else {
@@ -210,7 +215,11 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
         if (request.method() != HttpMethod.GET && msg instanceof LastHttpContent) {
 
             LOG.info(" =========== last http content : " + ((LastHttpContent) msg).content().toString());
-            dispatch0(ctx);
+            try {
+                dispatch0(ctx);
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
 
         }
 
@@ -355,7 +364,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
     }
 
 
-    private void dispatch0(ChannelHandlerContext ctx) throws InstantiationException, IllegalAccessException {
+    private void dispatch0(ChannelHandlerContext ctx) throws Throwable {
 
         RBHttpResponse response = new RBHttpResponse(request.protocolVersion(), HttpResponseStatus.OK);
 
@@ -481,7 +490,7 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
     }
 
 
-    public Object invokeMethod(Class target, Method method, RBHttpRequest request, RBHttpResponse response) throws IllegalAccessException, InstantiationException {
+    public Object invokeMethod(Class target, Method method, RBHttpRequest request, RBHttpResponse response) throws Throwable {
         Object resp = null;
 
         Object instance = target.newInstance();
@@ -496,11 +505,18 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
 
         } catch (Exception e) {
 
+            if (e instanceof InvocationTargetException){
+                throw ((InvocationTargetException)e).getTargetException();
+            }
+
             try {
                 if (e instanceof IllegalArgumentException) {
                     resp = method.invoke(instance, request);
                 }
             } catch (Exception e1) {
+                if (e1 instanceof InvocationTargetException){
+                    throw ((InvocationTargetException)e1).getTargetException();
+                }
 
                 try {
                     if (e1 instanceof IllegalArgumentException) {
@@ -508,13 +524,19 @@ public class DefaultRequestDispatcher extends BaseRequestDispatcher {
                     }
                 } catch (Exception e2) {
 
+                    if (e2 instanceof InvocationTargetException){
+                        throw ((InvocationTargetException)e2).getTargetException();
+                    }
+
                     try {
                         if (e2 instanceof IllegalArgumentException) {
                             resp = method.invoke(instance);
                         }
                     } catch (Exception e3) {
                         //ignore
-
+                        if (e3 instanceof InvocationTargetException){
+                            throw ((InvocationTargetException)e3).getTargetException();
+                        }
                     }
                 }
             }
