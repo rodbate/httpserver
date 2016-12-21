@@ -32,7 +32,7 @@ public abstract class BaseRequestDispatcher extends AbstractRequestDispatcher{
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         InetSocketAddress socketAddress = (InetSocketAddress) ctx.channel().remoteAddress();
-        LOGGER.info("The remote address is {}", socketAddress.getHostName());
+        LOGGER.info("The remote address is {}:{}", socketAddress.getHostName(), socketAddress.getPort());
         super.channelActive(ctx);
     }
 
