@@ -37,6 +37,8 @@ public class ServerConstants {
 
     public static final SimpleDateFormat HTTP_SIMPLE_DATE_FORMATTER =
             new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US) {
+                private static final long serialVersionUID = -6267430985491785100L;
+
                 {
                     super.setTimeZone(TimeZone.getTimeZone(HTTP_DATE_FORMAT_TIMEZONE));
                 }
@@ -50,11 +52,18 @@ public class ServerConstants {
     public static final String JAVA_IO_TMPDIR = System.getProperty("java.io.tmpdir");
 
 
+
     public static final String ISO_8859_1 = "ISO8859-1";
 
 
     public static final String HTTP_SEPARATOR = "\r\n";
 
     public static final int PROCESSORS = Runtime.getRuntime().availableProcessors();
+
+    public static void main(String[] args) {
+
+        System.out.println(JAVA_IO_TMPDIR);
+
+    }
 
 }
