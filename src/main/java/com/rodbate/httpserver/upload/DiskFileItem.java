@@ -92,11 +92,8 @@ public class DiskFileItem implements FileItem {
 
     @Override
     public boolean isInMemory() {
-        if (cachedContent != null) {
-            return true;
-        }
+        return cachedContent != null || outputStream.isInMemory();
 
-        return outputStream.isInMemory();
     }
 
 
